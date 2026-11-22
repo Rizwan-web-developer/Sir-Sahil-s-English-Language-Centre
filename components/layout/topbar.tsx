@@ -27,49 +27,39 @@ type TopbarProps = {
   areaLabel: string;
   logoUrl?: string | null;
   accountHref: string;
-  switchHref?: string;
-  switchLabel?: string;
 };
 
-export function Topbar({
-  profile,
-  area,
-  areaLabel,
-  logoUrl,
-  accountHref,
-  switchHref,
-  switchLabel,
-}: TopbarProps) {
+export function Topbar({ profile, area, areaLabel, logoUrl, accountHref }: TopbarProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const groups = getStaffNav(profile.role, area);
   const title = findNavTitle(pathname, groups) ?? areaLabel;
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-3 border-b bg-background/85 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/70 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-3 border-b bg-background/85 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/70 sm:px-6">
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger
           render={
             <Button
               variant="ghost"
-              size="icon-sm"
+              size="icon"
               className="md:hidden"
               aria-label={t.common.openMenu}
             />
           }
         >
-          <MenuIcon />
+          <MenuIcon className="size-5" />
         </SheetTrigger>
         <SheetContent
           side="left"
           showCloseButton={false}
-          className="w-[17.5rem] gap-0 p-0 sm:max-w-[17.5rem]"
+          className="w-[18rem] gap-0 border-r-0 p-0 sm:max-w-none"
         >
           <SheetHeader className="sr-only">
             <SheetTitle>{areaLabel}</SheetTitle>
-            <SheetDescription>{t.app.name}</SheetDescription>
+            <SheetDescription>{t.common.openMenu}</SheetDescription>
           </SheetHeader>
-          <div className="h-full overflow-hidden">
+          <div className="h-full">
             <SidebarContent
               profile={profile}
               area={area}
@@ -82,28 +72,13 @@ export function Topbar({
       </Sheet>
 
       <div className="min-w-0">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-          {areaLabel}
-        </p>
-        <p className="truncate text-sm font-medium leading-tight">{title}</p>
+        <p className="truncate text-sm font-semibold sm:text-base">{title}</p>
+        <p className="truncate text-[11px] text-muted-foreground">{areaLabel}</p>
       </div>
 
       <div className="ml-auto flex items-center gap-1.5">
-        {switchHref && switchLabel ? (
-          <a
-            href={switchHref}
-            className="hidden h-8 items-center rounded-lg border px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:inline-flex"
-          >
-            {switchLabel}
-          </a>
-        ) : null}
         <ThemeToggle />
-        <UserMenu
-          profile={profile}
-          accountHref={accountHref}
-          switchHref={switchHref}
-          switchLabel={switchLabel}
-        />
+        <UserMenu profile={profile} accountHref={accountHref} />
       </div>
     </header>
   );

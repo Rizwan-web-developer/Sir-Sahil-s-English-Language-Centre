@@ -67,7 +67,7 @@ export async function requireRole(allowed: UserRole[]): Promise<SessionContext> 
 }
 
 export async function requireStaff(): Promise<SessionContext> {
-  return requireRole(["owner", "reception"]);
+  return requireRole(["reception"]);
 }
 
 export async function requireOwner(): Promise<SessionContext> {

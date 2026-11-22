@@ -4,8 +4,7 @@ import { StaffShell } from "@/components/layout/app-shell";
 import { requireOwner } from "@/lib/auth/session";
 
 /**
- * Teaching Panel — owner only. Reception is redirected by the proxy and by
- * requireOwner(); RLS additionally denies all curriculum/progress access.
+ * Teacher panel - Sir Sahil only.
  */
 export default async function OwnerLayout({
   children,

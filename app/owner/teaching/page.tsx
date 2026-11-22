@@ -6,7 +6,7 @@ import { requireOwner } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { getTeachingData } from "@/lib/data/curriculum";
 
-export const metadata: Metadata = { title: "Teaching Panel" };
+export const metadata: Metadata = { title: "Batches & Course" };
 
 export default async function OwnerTeachingPage({
   searchParams,
@@ -24,9 +24,9 @@ export default async function OwnerTeachingPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Owner only"
-        title="Teaching Panel"
-        description="Select batch and session, then mark topics completed. Reception cannot access this area."
+        eyebrow="Teacher"
+        title="Batches & Course"
+        description="Select a batch, review course progress, mark topics completed, and assign work to students."
       />
       <TeachingPanel
         batches={(batches ?? []) as Array<Record<string, unknown>>}

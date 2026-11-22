@@ -154,7 +154,7 @@ function SessionProgress({
           compact
           icon={BookOpenCheckIcon}
           title={`${sessionLabel(type)} curriculum is empty`}
-          description="Your teacher adds levels, modules and topics from the teaching panel."
+          description="Your teacher adds levels, modules and topics from the teacher panel."
         />
       ) : (
         <div className="space-y-3">

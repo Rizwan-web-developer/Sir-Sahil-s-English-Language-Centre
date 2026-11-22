@@ -42,8 +42,8 @@ const STAFF_USERS: SeedUser[] = [
   {
     email: "owner@gmail.com",
     password: "owner@123",
-    fullName: "Admin",
-    role: "owner",
+    fullName: "Management",
+    role: "reception",
     defaultPanel: "management",
     phone: "",
   },

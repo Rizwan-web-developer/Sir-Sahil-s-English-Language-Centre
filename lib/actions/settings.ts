@@ -2,13 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 
-import { requireOwner } from "@/lib/auth/session";
+import { requireStaff } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 
 type Result = { ok: true; message?: string } | { ok: false; error: string };
 
 export async function updateSettingsAction(values: Record<string, string>): Promise<Result> {
-  await requireOwner();
+  await requireStaff();
   const supabase = await createClient();
   const rows = Object.entries(values).map(([key, value]) => ({ key, value }));
   const { error } = await supabase.from("settings").upsert(rows, { onConflict: "key" });

@@ -22,18 +22,7 @@ export async function StaffShell({ profile, area, children }: StaffShellProps) {
   const areaLabel = t.areas[area];
   const settings = await getSettings();
   const logoUrl = settingString(settings, "institute_logo_url", "") || null;
-  const isOwner = profile.role === "owner";
   const accountHref = area === "admin" ? "/admin/account" : "/owner/account";
-  const switchHref = isOwner
-    ? area === "admin"
-      ? "/owner"
-      : "/admin"
-    : undefined;
-  const switchLabel = isOwner
-    ? area === "admin"
-      ? t.common.goToOwner
-      : t.common.goToAdmin
-    : undefined;
 
   return (
     <div className="min-h-dvh bg-background md:grid md:grid-cols-[17rem_minmax(0,1fr)]">
@@ -58,8 +47,6 @@ export async function StaffShell({ profile, area, children }: StaffShellProps) {
           areaLabel={areaLabel}
           logoUrl={logoUrl}
           accountHref={accountHref}
-          switchHref={switchHref}
-          switchLabel={switchLabel}
         />
 
         <main id="main-content" className="flex-1">

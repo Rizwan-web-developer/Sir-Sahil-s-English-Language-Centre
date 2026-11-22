@@ -16,20 +16,16 @@ export const INSTITUTE = {
   defaultFeeDueDay: 10,
 } as const;
 
-/** Where each role lands after login. Owner is resolved by profile.default_panel. */
+/** Where each role lands after login. */
 export const ROLE_HOME: Record<UserRole, string> = {
-  owner: "/admin",
+  owner: "/owner",
   reception: "/admin",
   student: "/portal",
 };
 
-export function staffHomeForPanel(panel: "teacher" | "management" | null | undefined) {
-  return panel === "teacher" ? "/owner" : "/admin";
-}
-
 /** Prefixes each role is allowed to open. Used by proxy + layouts. */
 export const AREA_ROLES: Record<string, UserRole[]> = {
-  "/admin": ["owner", "reception"],
+  "/admin": ["reception"],
   "/owner": ["owner"],
   "/portal": ["student"],
 };

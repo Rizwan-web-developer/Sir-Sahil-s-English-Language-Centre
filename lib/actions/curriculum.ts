@@ -88,6 +88,28 @@ export async function skipTopicAction(args: {
   return { ok: true, data: undefined, message: "Topic skipped." };
 }
 
+export async function assignAssignmentToBatchAction(args: {
+  batch_id: string;
+  assignment_id: string;
+}): Promise<Result> {
+  await requireOwner();
+  const supabase = await createClient();
+  const { data: enrollments } = await supabase.from("batch_students").select("student_id").eq("batch_id", args.batch_id).eq("active", true);
+  const studentIds = (enrollments ?? []).map((e) => String((e as Record<string, unknown>).student_id));
+  if (!studentIds.length) return { ok: false, error: "No active students in this batch." };
+  const rows = studentIds.map((sid) => ({
+    student_id: sid,
+    assignment_id: args.assignment_id,
+    status: "pending",
+    submitted_at: new Date().toISOString(),
+  }));
+  const { error } = await supabase.from("submissions").upsert(rows, { onConflict: "student_id,assignment_id", ignoreDuplicates: true });
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/owner/teaching");
+  revalidatePath("/portal/assignments");
+  return { ok: true, data: undefined, message: "Assignment assigned to batch students." };
+}
+
 export async function createCurriculumItemAction(args: {
   kind: "level" | "module" | "topic" | "assignment";
   parentId?: string;

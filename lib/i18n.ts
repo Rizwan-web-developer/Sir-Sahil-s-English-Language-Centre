@@ -20,8 +20,8 @@ const en = {
     timezone: "Asia/Karachi",
   },
   roles: {
-    owner: "Owner",
-    reception: "Reception",
+    owner: "Teacher",
+    reception: "Management",
     student: "Student",
   },
   common: {
@@ -118,7 +118,7 @@ const en = {
     home: "Home",
     more: "More",
     workspace: "Management",
-    teachingGroup: "Teacher panel",
+    teachingGroup: "Teacher",
     instituteGroup: "Institute",
     systemGroup: "System",
     portalGroup: "My portal",
@@ -231,7 +231,7 @@ const en = {
     nextTopic: "Today's topic",
     notStarted: "Not started",
     quickActions: "Quick actions",
-    viewTeachingPanel: "Open teaching panel",
+    viewTeachingPanel: "Open teacher panel",
     manageStudents: "Manage students",
     markAttendance: "Mark attendance",
     recordPayment: "Record payment",

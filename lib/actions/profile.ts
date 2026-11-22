@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { requireOwner, requireSession } from "@/lib/auth/session";
+import { requireSession, requireStaff } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 
 type Result<T = undefined> = { ok: true; data: T; message?: string } | { ok: false; error: string };
@@ -41,7 +41,7 @@ export async function uploadProfileAvatarAction(formData: FormData): Promise<Res
 }
 
 export async function uploadInstituteLogoAction(formData: FormData): Promise<Result<{ url: string }>> {
-  const session = await requireOwner();
+  const session = await requireStaff();
   const file = formData.get("file");
   if (!(file instanceof File) || !file.size) return { ok: false, error: "Please select a PNG/logo image." };
   if (!file.type.startsWith("image/")) return { ok: false, error: "Only image files are allowed." };

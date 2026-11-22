@@ -3,14 +3,14 @@ import type { Metadata } from "next";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { requireOwner } from "@/lib/auth/session";
+import { requireStaff } from "@/lib/auth/session";
 import { getAuditLogs } from "@/lib/data/audit";
 import { formatDateTime } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Audit Log" };
 
 export default async function AuditLogPage() {
-  await requireOwner();
+  await requireStaff();
   const logs = await getAuditLogs(150);
 
   return (

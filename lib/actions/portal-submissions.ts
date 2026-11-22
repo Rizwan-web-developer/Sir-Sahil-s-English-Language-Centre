@@ -8,6 +8,7 @@ import { z } from "zod";
 import { requireStudent } from "@/lib/auth/session";
 import { getOwnStudent } from "@/lib/data/dashboard";
 import { isR2Configured, createPresignedUploadUrl } from "@/lib/storage/r2";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 type Result<T = undefined> = { ok: true; data: T; message?: string } | { ok: false; error: string };
@@ -81,6 +82,25 @@ export async function submitAssignmentAction(input: unknown): Promise<Result> {
 
   const { error } = await query;
   if (error) return { ok: false, error: error.message };
+
+  try {
+    const admin = createAdminClient();
+    const [{ data: owners }, { data: assignment }] = await Promise.all([
+      admin.from("profiles").select("id").eq("role", "owner").eq("is_active", true),
+      admin.from("topic_assignments").select("title").eq("id", parsed.data.assignment_id).maybeSingle(),
+    ]);
+    const title = (assignment as Record<string, unknown> | null)?.title ?? "Assignment";
+    const rows = (owners ?? []).map((o) => ({
+      user_id: (o as Record<string, unknown>).id,
+      title: "New assignment submission",
+      body: `${student.full_name} submitted \"${String(title)}\".`,
+      type: "assignment_submission",
+      link: "/owner/assignments?status=submitted",
+    }));
+    if (rows.length) await admin.from("notifications").insert(rows);
+  } catch {
+    // Notification failure should not block submission.
+  }
 
   revalidatePath("/portal/assignments");
   revalidatePath("/owner/assignments");

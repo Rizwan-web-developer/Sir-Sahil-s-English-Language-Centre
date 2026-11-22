@@ -1,14 +1,7 @@
 "use client";
 
-import Link from "next/link";
+import { CheckIcon, ChevronDownIcon, LogOutIcon, UserRoundIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import {
-  ArrowLeftRightIcon,
-  CheckIcon,
-  ChevronDownIcon,
-  LogOutIcon,
-  UserRoundIcon,
-} from "lucide-react";
 import { useTransition } from "react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -29,16 +22,9 @@ import type { Profile } from "@/types/domain";
 type UserMenuProps = {
   profile: Pick<Profile, "full_name" | "role">;
   accountHref: string;
-  switchHref?: string;
-  switchLabel?: string;
 };
 
-export function UserMenu({
-  profile,
-  accountHref,
-  switchHref,
-  switchLabel,
-}: UserMenuProps) {
+export function UserMenu({ profile, accountHref }: UserMenuProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -67,9 +53,7 @@ export function UserMenu({
       <DropdownMenuContent align="end" className="w-60">
         <DropdownMenuGroup>
           <DropdownMenuLabel className="font-normal">
-            <span className="block truncate text-sm font-medium">
-              {profile.full_name}
-            </span>
+            <span className="block truncate text-sm font-medium">{profile.full_name}</span>
             <span className="flex items-center gap-1 text-xs text-muted-foreground">
               <CheckIcon className="size-3 text-gold" />
               {t.roles[profile.role]}
@@ -77,54 +61,20 @@ export function UserMenu({
           </DropdownMenuLabel>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem
-          className="gap-2"
-          onClick={() => router.push(accountHref)}
-        >
+        <DropdownMenuItem className="gap-2" onClick={() => router.push(accountHref)}>
           <UserRoundIcon className="size-4 text-muted-foreground" />
           {t.common.account}
         </DropdownMenuItem>
-        {switchHref && switchLabel && (
-          <DropdownMenuItem
-            className="gap-2"
-            onClick={() => router.push(switchHref)}
-          >
-            <ArrowLeftRightIcon className="size-4 text-muted-foreground" />
-            {switchLabel}
-          </DropdownMenuItem>
-        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem
           className="gap-2 text-destructive data-highlighted:text-destructive"
           disabled={isPending}
-          onClick={() =>
-            startTransition(() => {
-              void logoutAction();
-            })
-          }
+          onClick={() => startTransition(() => { void logoutAction(); })}
         >
           <LogOutIcon className="size-4" />
           {t.common.signOut}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  );
-}
-
-/** Small helper for areas that need a text-only switch link. */
-export function AreaSwitchLink({
-  href,
-  label,
-}: {
-  href: string;
-  label: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="text-xs font-medium text-primary underline-offset-4 hover:underline"
-    >
-      {label}
-    </Link>
   );
 }
