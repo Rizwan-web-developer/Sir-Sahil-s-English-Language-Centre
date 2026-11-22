@@ -13,11 +13,11 @@ import { cn } from "@/lib/utils";
 import { logoutAction } from "@/lib/auth/actions";
 import type { Profile } from "@/types/domain";
 
-import { isNavActive, type NavGroup } from "./nav-config";
+import { getStaffNav, isNavActive, type StaffArea } from "./nav-config";
 
 type SidebarProps = {
   profile: Pick<Profile, "full_name" | "role">;
-  groups: NavGroup[];
+  area: StaffArea;
   areaLabel: string;
   onNavigate?: () => void;
 };
@@ -28,12 +28,13 @@ type SidebarProps = {
  */
 export function SidebarContent({
   profile,
-  groups,
+  area,
   areaLabel,
   onNavigate,
 }: SidebarProps) {
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
+  const groups = getStaffNav(profile.role, area);
 
   return (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">

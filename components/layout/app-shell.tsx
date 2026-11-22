@@ -4,7 +4,7 @@ import { t } from "@/lib/i18n";
 import type { Profile } from "@/types/domain";
 
 import { AppSidebar } from "./app-sidebar";
-import { getStaffNav, type StaffArea } from "./nav-config";
+import type { StaffArea } from "./nav-config";
 import { Topbar } from "./topbar";
 
 type StaffShellProps = {
@@ -18,7 +18,6 @@ type StaffShellProps = {
  * Desktop: navy sidebar + topbar. Mobile: topbar + slide-over navigation.
  */
 export function StaffShell({ profile, area, children }: StaffShellProps) {
-  const groups = getStaffNav(profile.role, area);
   const areaLabel = t.areas[area];
   const isOwner = profile.role === "owner";
   const accountHref = area === "admin" ? "/admin/account" : "/owner/account";
@@ -44,14 +43,14 @@ export function StaffShell({ profile, area, children }: StaffShellProps) {
 
       <AppSidebar
         profile={profile}
-        groups={groups}
+        area={area}
         areaLabel={areaLabel}
       />
 
       <div className="flex min-h-dvh min-w-0 flex-col">
         <Topbar
           profile={profile}
-          groups={groups}
+          area={area}
           areaLabel={areaLabel}
           accountHref={accountHref}
           switchHref={switchHref}

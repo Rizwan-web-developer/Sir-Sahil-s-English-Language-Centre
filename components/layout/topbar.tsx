@@ -17,13 +17,13 @@ import { t } from "@/lib/i18n";
 import type { Profile } from "@/types/domain";
 
 import { SidebarContent } from "./app-sidebar";
-import { findNavTitle, type NavGroup } from "./nav-config";
+import { findNavTitle, getStaffNav, type StaffArea } from "./nav-config";
 import { ThemeToggle } from "./theme-toggle";
 import { UserMenu } from "./user-menu";
 
 type TopbarProps = {
   profile: Pick<Profile, "full_name" | "role">;
-  groups: NavGroup[];
+  area: StaffArea;
   areaLabel: string;
   accountHref: string;
   switchHref?: string;
@@ -32,7 +32,7 @@ type TopbarProps = {
 
 export function Topbar({
   profile,
-  groups,
+  area,
   areaLabel,
   accountHref,
   switchHref,
@@ -40,6 +40,7 @@ export function Topbar({
 }: TopbarProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const groups = getStaffNav(profile.role, area);
   const title = findNavTitle(pathname, groups) ?? areaLabel;
 
   return (
@@ -69,7 +70,7 @@ export function Topbar({
           <div className="h-full overflow-hidden">
             <SidebarContent
               profile={profile}
-              groups={groups}
+              area={area}
               areaLabel={areaLabel}
               onNavigate={() => setOpen(false)}
             />
