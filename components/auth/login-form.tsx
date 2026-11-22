@@ -1,112 +1,104 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  ArrowRightIcon,
-  CircleAlertIcon,
-  EyeIcon,
-  EyeOffIcon,
-  IdCardIcon,
-  LockIcon,
-} from "lucide-react";
+import { CircleAlertIcon, EyeIcon, EyeOffIcon, LockIcon, MailIcon, IdCardIcon } from "lucide-react";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { loginAction } from "@/lib/auth/actions";
-import { t } from "@/lib/i18n";
-import { loginSchema, type LoginInput } from "@/lib/validation/auth";
+import { cn } from "@/lib/utils";
 
-const demoAccounts = [
-  { label: t.auth.owner, identifier: "sir.sahil@selc.pk", password: "Owner@12345" },
-  { label: t.auth.reception, identifier: "reception@selc.pk", password: "Reception@12345" },
-  { label: t.auth.studentDemo, identifier: "SELC-0001", password: "Student@12345" },
-];
+const schema = z.object({
+  identifier: z.string().trim().min(1, "This field is required"),
+  password: z.string().min(1, "Password is required"),
+});
 
-export function LoginForm({ showDemo = false }: { showDemo?: boolean }) {
+type FormValues = z.infer<typeof schema>;
+
+export function LoginForm() {
+  const [mode, setMode] = useState<"admin" | "student">("admin");
   const [isPending, startTransition] = useTransition();
   const [serverError, setServerError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
-  const form = useForm<LoginInput>({
-    resolver: zodResolver(loginSchema),
+  const form = useForm<FormValues>({
+    resolver: zodResolver(schema),
     defaultValues: { identifier: "", password: "" },
-    mode: "onBlur",
   });
 
-  function onSubmit(values: LoginInput) {
+  function onSubmit(values: FormValues) {
     setServerError(null);
     startTransition(async () => {
       const result = await loginAction(values);
-      if (result?.error) {
-        setServerError(result.error);
-      }
+      if (result?.error) setServerError(result.error);
     });
   }
 
-  function fillDemoAccount(identifier: string, password: string) {
-    setServerError(null);
-    form.setValue("identifier", identifier, { shouldValidate: true });
-    form.setValue("password", password, { shouldValidate: true });
-  }
-
-  const identifierError = form.formState.errors.identifier?.message;
-  const passwordError = form.formState.errors.password?.message;
+  const isAdmin = mode === "admin";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-2 rounded-xl bg-muted p-1">
+        <button
+          type="button"
+          onClick={() => { setMode("admin"); setServerError(null); form.reset(); }}
+          className={cn("rounded-lg px-3 py-2 text-sm font-medium transition", isAdmin ? "bg-background shadow-sm" : "text-muted-foreground")}
+        >
+          Admin Login
+        </button>
+        <button
+          type="button"
+          onClick={() => { setMode("student"); setServerError(null); form.reset(); }}
+          className={cn("rounded-lg px-3 py-2 text-sm font-medium transition", !isAdmin ? "bg-background shadow-sm" : "text-muted-foreground")}
+        >
+          Student Login
+        </button>
+      </div>
+
       {serverError && (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="py-2">
           <CircleAlertIcon />
           <AlertDescription>{serverError}</AlertDescription>
         </Alert>
       )}
 
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5" noValidate>
-        <div className="space-y-2">
-          <Label htmlFor="identifier">{t.auth.identifier}</Label>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" noValidate>
+        <div className="space-y-1.5">
+          <Label htmlFor="identifier">{isAdmin ? "Email" : "Student Code / Phone"}</Label>
           <div className="relative">
-            <IdCardIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            {isAdmin ? (
+              <MailIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            ) : (
+              <IdCardIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            )}
             <Input
               id="identifier"
               autoComplete="username"
               autoCapitalize="none"
               spellCheck={false}
-              placeholder="you@example.com or SELC-0001"
+              placeholder={isAdmin ? "owner@gmail.com" : "SELC-0001 or phone number"}
               className="h-10 pl-9"
-              aria-invalid={Boolean(identifierError)}
-              aria-describedby="identifier-hint"
               {...form.register("identifier")}
             />
           </div>
-          {identifierError ? (
-            <p className="text-xs text-destructive">{identifierError}</p>
-          ) : (
-            <p id="identifier-hint" className="text-xs leading-relaxed text-muted-foreground">
-              {t.auth.identifierHint}
-            </p>
-          )}
+          {form.formState.errors.identifier && <p className="text-xs text-destructive">{form.formState.errors.identifier.message}</p>}
         </div>
 
-        <div className="space-y-2">
-          <div className="flex items-center justify-between gap-2">
-            <Label htmlFor="password">{t.auth.password}</Label>
-            <span className="text-[11px] text-muted-foreground">
-              {t.auth.studentNote}
-            </span>
-          </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="password">Password</Label>
           <div className="relative">
             <LockIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               id="password"
               type={showPassword ? "text" : "password"}
               autoComplete="current-password"
-              placeholder="••••••••"
+              placeholder="Enter password"
               className="h-10 pl-9 pr-10"
-              aria-invalid={Boolean(passwordError)}
               {...form.register("password")}
             />
             <Button
@@ -114,58 +106,23 @@ export function LoginForm({ showDemo = false }: { showDemo?: boolean }) {
               variant="ghost"
               size="icon-sm"
               className="absolute right-1 top-1/2 -translate-y-1/2 text-muted-foreground"
-              onClick={() => setShowPassword((value) => !value)}
-              aria-label={
-                showPassword ? t.auth.hidePassword : t.auth.showPassword
-              }
-              title={showPassword ? t.auth.hidePassword : t.auth.showPassword}
+              onClick={() => setShowPassword((v) => !v)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
             >
               {showPassword ? <EyeOffIcon /> : <EyeIcon />}
             </Button>
           </div>
-          {passwordError && <p className="text-xs text-destructive">{passwordError}</p>}
+          {form.formState.errors.password && <p className="text-xs text-destructive">{form.formState.errors.password.message}</p>}
         </div>
 
-        <Button
-          type="submit"
-          size="lg"
-          className="h-10 w-full gap-2"
-          disabled={isPending}
-        >
-          {isPending ? t.auth.signingIn : t.auth.signIn}
-          {!isPending && <ArrowRightIcon className="size-4" />}
+        <Button type="submit" className="h-10 w-full" disabled={isPending}>
+          {isPending ? "Signing in..." : isAdmin ? "Login as Admin" : "Login as Student"}
         </Button>
       </form>
 
-      <p className="text-center text-xs text-muted-foreground">
-        Forgot password? Contact the institute reception for a reset.
+      <p className="text-center text-[11px] leading-relaxed text-muted-foreground">
+        {isAdmin ? "Admin access only. Student accounts are created by admin." : "Use the student code or phone number given by the institute."}
       </p>
-
-      {showDemo && (
-        <div className="rounded-lg border border-dashed bg-muted/40 p-3">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-            {t.auth.demoTitle}
-          </p>
-          <div className="mt-2 grid gap-1.5">
-            {demoAccounts.map((account) => (
-              <button
-                key={account.identifier}
-                type="button"
-                onClick={() => fillDemoAccount(account.identifier, account.password)}
-                className="flex items-center justify-between gap-3 rounded-md bg-background/70 px-2.5 py-1.5 text-left text-[11px] transition-colors hover:bg-background"
-              >
-                <span className="font-medium">{account.label}</span>
-                <span className="truncate font-mono text-muted-foreground">
-                  {account.identifier} · {account.password}
-                </span>
-              </button>
-            ))}
-          </div>
-          <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
-            {t.auth.demoHint}
-          </p>
-        </div>
-      )}
     </div>
   );
 }

@@ -31,18 +31,11 @@ type SeedUser = {
 
 const STAFF_USERS: SeedUser[] = [
   {
-    email: "sir.sahil@selc.pk",
-    password: "Owner@12345",
-    fullName: "Sir Sahil",
+    email: "owner@gmail.com",
+    password: "owner@123",
+    fullName: "Admin",
     role: "owner",
-    phone: "03001234567",
-  },
-  {
-    email: "reception@selc.pk",
-    password: "Reception@12345",
-    fullName: "Reception Desk",
-    role: "reception",
-    phone: "03007654321",
+    phone: "",
   },
 ];
 
@@ -215,229 +208,6 @@ async function seedStaff() {
   return ids;
 }
 
-async function seedStudents() {
-  const studentIds: Array<{ studentId: string; profileId: string; code: string }> = [];
-
-  for (const demo of DEMO_STUDENTS) {
-    const email = `${demo.code.toLowerCase()}@selc.local`;
-    const profileId = await ensureAuthUser({
-      email,
-      password: STUDENT_PASSWORD,
-      fullName: demo.full_name,
-      role: "student",
-      phone: demo.phone,
-    });
-    await ensureProfile(profileId, {
-      email,
-      password: STUDENT_PASSWORD,
-      fullName: demo.full_name,
-      role: "student",
-      phone: demo.phone,
-    });
-
-    const { data: existing } = await supabase
-      .from("students")
-      .select("id")
-      .eq("student_code", demo.code)
-      .maybeSingle();
-
-    const payload = {
-      student_code: demo.code,
-      profile_id: profileId,
-      full_name: demo.full_name,
-      father_name: demo.father_name,
-      phone: demo.phone,
-      parent_phone: demo.phone,
-      whatsapp: demo.phone,
-      status: "active" as const,
-      monthly_fee: demo.monthly_fee,
-      discount: 0,
-      is_archived: false,
-    };
-
-    let studentId = existing?.id as string | undefined;
-    if (studentId) {
-      const { error } = await supabase.from("students").update(payload).eq("id", studentId);
-      if (error) throw error;
-    } else {
-      const { data, error } = await supabase
-        .from("students")
-        .insert(payload)
-        .select("id")
-        .single();
-      if (error) throw error;
-      studentId = data.id;
-    }
-
-    studentIds.push({ studentId: studentId!, profileId, code: demo.code });
-    console.log(`  student: ${demo.code} ${demo.full_name}`);
-  }
-
-  // Keep the sequence ahead of the seeded codes so future auto-inserts don't clash.
-  const maxCode = DEMO_STUDENTS.reduce((max, s) => {
-    const n = Number(s.code.replace("SELC-", ""));
-    return Number.isFinite(n) ? Math.max(max, n) : max;
-  }, 0);
-  const { error: seqError } = await supabase.rpc("seed_set_student_code_seq", {
-    p_value: maxCode,
-  });
-  if (seqError) {
-    console.warn(
-      "  warning: could not advance student_code_seq (apply 006_seed_helpers.sql).",
-      seqError.message,
-    );
-  }
-
-  return studentIds;
-}
-
-async function seedBatches(students: Array<{ studentId: string }>) {
-  const batchIds: string[] = [];
-
-  for (const batch of BATCHES) {
-    const { data: existing } = await supabase
-      .from("batches")
-      .select("id")
-      .eq("name", batch.name)
-      .maybeSingle();
-
-    const payload = {
-      name: batch.name,
-      class_type: batch.class_type,
-      start_time: batch.start_time,
-      capacity: batch.capacity,
-      status: "active" as const,
-    };
-
-    let batchId = existing?.id as string | undefined;
-    if (batchId) {
-      const { error } = await supabase.from("batches").update(payload).eq("id", batchId);
-      if (error) throw error;
-    } else {
-      const { data, error } = await supabase.from("batches").insert(payload).select("id").single();
-      if (error) throw error;
-      batchId = data.id;
-    }
-
-    batchIds.push(batchId!);
-
-    // Rebuild schedule for determinism.
-    await supabase.from("batch_schedule").delete().eq("batch_id", batchId);
-
-    const scheduleRows = [];
-    for (let day = 1; day <= 5; day += 1) {
-      for (const session of batch.schedule) {
-        scheduleRows.push({
-          batch_id: batchId,
-          day_of_week: day,
-          session_type: session.session_type,
-          start_time: session.start_time,
-          end_time: session.end_time,
-        });
-      }
-    }
-    const { error: scheduleError } = await supabase.from("batch_schedule").insert(scheduleRows);
-    if (scheduleError) throw scheduleError;
-
-    console.log(`  batch: ${batch.name}`);
-  }
-
-  // Distribute students: 4, 3, 3
-  const distribution = [batchIds[0], batchIds[0], batchIds[0], batchIds[0], batchIds[1], batchIds[1], batchIds[1], batchIds[2], batchIds[2], batchIds[2]];
-  for (let i = 0; i < students.length; i += 1) {
-    const batchId = distribution[i];
-    const studentId = students[i].studentId;
-    // Keep one active enrollment per student for the seed.
-    await supabase.from("batch_students").delete().eq("student_id", studentId);
-    const { error } = await supabase.from("batch_students").insert({
-      batch_id: batchId,
-      student_id: studentId,
-      active: true,
-      joined_on: new Date().toISOString().slice(0, 10),
-    });
-    if (error) throw error;
-  }
-
-  return batchIds;
-}
-
-async function seedCurriculum() {
-  for (const sessionType of SESSION_TYPES) {
-    for (let levelIndex = 0; levelIndex < LEVELS.length; levelIndex += 1) {
-      const levelName = LEVELS[levelIndex];
-      const { data: existingLevel } = await supabase
-        .from("levels")
-        .select("id")
-        .eq("name", levelName)
-        .eq("session_type", sessionType)
-        .maybeSingle();
-
-      const levelPayload = {
-        name: levelName,
-        session_type: sessionType,
-        sort_order: levelIndex + 1,
-        description: `${levelName} ${sessionType} track.`,
-      };
-
-      let levelId = existingLevel?.id as string | undefined;
-      if (levelId) {
-        const { error } = await supabase.from("levels").update(levelPayload).eq("id", levelId);
-        if (error) throw error;
-      } else {
-        const { data, error } = await supabase.from("levels").insert(levelPayload).select("id").single();
-        if (error) throw error;
-        levelId = data.id;
-      }
-
-      // Rebuild modules/topics/assignments for clean seed.
-      await supabase.from("modules").delete().eq("level_id", levelId);
-
-      for (let m = 0; m < 2; m += 1) {
-        const moduleName = `${levelName} ${sessionType === "conversation" ? "Conversation" : "Grammar"} Module ${m + 1}`;
-        const { data: module, error: moduleError } = await supabase
-          .from("modules")
-          .insert({
-            level_id: levelId,
-            name: moduleName,
-            session_type: sessionType,
-            sort_order: m + 1,
-            description: `Core ${sessionType} practice for ${levelName.toLowerCase()} learners.`,
-          })
-          .select("id")
-          .single();
-        if (moduleError) throw moduleError;
-
-        const topics = moduleTopics(levelName, sessionType, m);
-        for (const topic of topics) {
-          const { data: topicRow, error: topicError } = await supabase
-            .from("topics")
-            .insert({
-              module_id: module.id,
-              name: topic.name,
-              session_type: sessionType,
-              description: topic.description,
-              sort_order: topic.sort_order,
-            })
-            .select("id")
-            .single();
-          if (topicError) throw topicError;
-
-          const { error: assignmentError } = await supabase.from("topic_assignments").insert({
-            topic_id: topicRow.id,
-            title: topic.assignment.title,
-            instructions: topic.assignment.instructions,
-            session_type: sessionType,
-            sort_order: 1,
-            due_offset_days: topic.assignment.due_offset_days,
-          });
-          if (assignmentError) throw assignmentError;
-        }
-      }
-      console.log(`  curriculum: ${levelName} / ${sessionType}`);
-    }
-  }
-}
-
 async function main() {
   console.log(RESET ? "SELC seed: reset + seed" : "SELC seed: upsert");
 
@@ -449,22 +219,11 @@ async function main() {
   console.log("Settings seeded.");
 
   await seedStaff();
-  console.log("Staff seeded.");
+  console.log("Admin seeded.");
 
-  const students = await seedStudents();
-  console.log("Students seeded.");
-
-  await seedBatches(students);
-  console.log("Batches seeded.");
-
-  await seedCurriculum();
-  console.log("Curriculum seeded.");
-
-  console.log("\nDemo credentials");
-  console.log("  Owner:     sir.sahil@selc.pk / Owner@12345");
-  console.log("  Reception: reception@selc.pk / Reception@12345");
-  console.log("  Students:  SELC-0001..SELC-0010 / Student@12345");
-  console.log("\nStudent login accepts student code or phone number as the identifier.");
+  console.log("\nAdmin credentials");
+  console.log("  Admin: owner@gmail.com / owner@123");
+  console.log("\nStudents can login only after admin creates their accounts.");
 }
 
 main().catch((error) => {
