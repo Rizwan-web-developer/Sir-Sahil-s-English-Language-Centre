@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-import { ROLE_HOME } from "@/lib/constants";
+import { ROLE_HOME, staffHomeForPanel } from "@/lib/constants";
 import type { UserRole } from "@/types/domain";
 
 /**
@@ -98,16 +98,18 @@ export async function proxy(request: NextRequest) {
 
   // app_metadata is set by the service role when accounts are provisioned.
   let role = user.app_metadata?.role as UserRole | undefined;
+  let defaultPanel: "teacher" | "management" | undefined;
 
-  if (!role || !["owner", "reception", "student"].includes(role)) {
+  if (!role || !["owner", "reception", "student"].includes(role) || role === "owner") {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("role, is_active")
+      .select("role, is_active, default_panel")
       .eq("id", user.id)
       .maybeSingle();
 
     if (profile?.role) {
       role = profile.role as UserRole;
+      defaultPanel = (profile.default_panel as "teacher" | "management" | null) ?? undefined;
     }
   }
 
@@ -115,18 +117,20 @@ export async function proxy(request: NextRequest) {
     return isPublic ? response : redirectWithCookies(request, "/login", response);
   }
 
+  const home = role === "owner" ? staffHomeForPanel(defaultPanel) : ROLE_HOME[role];
+
   // Signed-in users never need the login page.
   if (pathname === "/login") {
-    return redirectWithCookies(request, ROLE_HOME[role], response);
+    return redirectWithCookies(request, home, response);
   }
 
   if (pathname === "/") {
-    return redirectWithCookies(request, ROLE_HOME[role], response);
+    return redirectWithCookies(request, home, response);
   }
 
   // Wrong area for this role — bounce to their own home.
   if (area && !area.roles.includes(role)) {
-    return redirectWithCookies(request, ROLE_HOME[role], response);
+    return redirectWithCookies(request, home, response);
   }
 
   return response;

@@ -21,7 +21,7 @@ export const getSessionProfile = cache(async (): Promise<SessionContext | null> 
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, full_name, role, phone, is_active, must_change_password, created_at, updated_at")
+    .select("id, full_name, role, phone, avatar_url, is_active, must_change_password, default_panel, created_at, updated_at")
     .eq("id", user.id)
     .maybeSingle();
 

@@ -3,14 +3,10 @@ import Link from "next/link";
 import {
   ArrowRightIcon,
   AwardIcon,
-  CalendarDaysIcon,
   ClipboardCheckIcon,
   GraduationCapIcon,
   LayersIcon,
-  ScanLineIcon,
   TargetIcon,
-  UsersIcon,
-  WalletIcon,
 } from "lucide-react";
 
 import { EmptyState } from "@/components/shared/empty-state";
@@ -227,14 +223,14 @@ export default async function OwnerOverviewPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Institute shortcuts</CardTitle>
+              <CardTitle>Teacher shortcuts</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-1.5">
               {[
-                { label: t.nav.students, href: "/admin/students", icon: UsersIcon },
-                { label: t.nav.attendance, href: "/admin/attendance", icon: ScanLineIcon },
-                { label: t.nav.fees, href: "/admin/fees", icon: WalletIcon },
-                { label: t.nav.reports, href: "/admin/reports", icon: CalendarDaysIcon },
+                { label: t.nav.teaching, href: "/owner/teaching", icon: GraduationCapIcon },
+                { label: "Curriculum", href: "/owner/curriculum", icon: TargetIcon },
+                { label: t.nav.assignments, href: "/owner/assignments", icon: ClipboardCheckIcon },
+                { label: t.nav.certificates, href: "/owner/certificates", icon: AwardIcon },
               ].map((link) => {
                 const Icon = link.icon;
                 return (

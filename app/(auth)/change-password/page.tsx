@@ -17,7 +17,7 @@ export default async function ChangePasswordPage() {
           <p className="font-medium">Password change required</p>
           <p className="text-muted-foreground">Please update your password before continuing.</p>
         </div>
-        <AccountPanel name={profile.full_name} email={email} role={profile.role} />
+        <AccountPanel name={profile.full_name} email={email} role={profile.role} avatarUrl={profile.avatar_url} />
       </div>
     </main>
   );

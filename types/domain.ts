@@ -35,13 +35,17 @@ export type SubmissionStatus =
   | "resubmit_requested";
 export type CertificateStatus = "pending" | "approved" | "issued" | "rejected" | "revoked";
 
+export type StaffPanel = "teacher" | "management";
+
 export interface Profile {
   id: string;
   full_name: string;
   role: UserRole;
   phone: string | null;
+  avatar_url: string | null;
   is_active: boolean;
   must_change_password: boolean;
+  default_panel: StaffPanel;
   created_at: string;
   updated_at: string;
 }

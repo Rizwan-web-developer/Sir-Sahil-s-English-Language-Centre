@@ -26,15 +26,25 @@ type SeedUser = {
   password: string;
   fullName: string;
   role: "owner" | "reception" | "student";
+  defaultPanel?: "teacher" | "management";
   phone?: string;
 };
 
 const STAFF_USERS: SeedUser[] = [
   {
+    email: "teacher@gmail.com",
+    password: "teacher@123",
+    fullName: "Sir Sahil",
+    role: "owner",
+    defaultPanel: "teacher",
+    phone: "",
+  },
+  {
     email: "owner@gmail.com",
     password: "owner@123",
     fullName: "Admin",
     role: "owner",
+    defaultPanel: "management",
     phone: "",
   },
 ];
@@ -151,6 +161,7 @@ async function ensureProfile(userId: string, user: SeedUser) {
       role: user.role,
       phone: user.phone ?? null,
       is_active: true,
+      default_panel: user.defaultPanel ?? "management",
     },
     { onConflict: "id" },
   );
@@ -219,10 +230,11 @@ async function main() {
   console.log("Settings seeded.");
 
   await seedStaff();
-  console.log("Admin seeded.");
+  console.log("Staff seeded.");
 
-  console.log("\nAdmin credentials");
-  console.log("  Admin: owner@gmail.com / owner@123");
+  console.log("\nStaff credentials");
+  console.log("  Teacher panel: teacher@gmail.com / teacher@123");
+  console.log("  Management panel: owner@gmail.com / owner@123");
   console.log("\nStudents can login only after admin creates their accounts.");
 }
 

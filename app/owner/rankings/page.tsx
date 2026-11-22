@@ -12,7 +12,6 @@ export default function OwnerRankingsPage() {
       eyebrow={t.nav.teachingGroup}
       title={t.nav.rankings}
       description="Class rankings per level, awarded by the owner."
-      phase={6}
       featureTitle="Rank each batch, level by level"
       featureDescription="Rankings combine assignment marks and attendance, then Sir Sahil confirms the final order."
       icon={TrophyIcon}

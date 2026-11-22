@@ -18,7 +18,6 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { SessionBadge } from "@/components/shared/session-badge";
 import { StatCard } from "@/components/shared/stat-card";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireStaff } from "@/lib/auth/session";
 import { getAdminOverview } from "@/lib/data/dashboard";
@@ -186,12 +185,6 @@ export default async function AdminDashboardPage() {
               <div className="min-w-0 space-y-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="text-sm font-medium">Barcode attendance</p>
-                  <Badge
-                    variant="outline"
-                    className="border-gold/40 bg-background/50 text-[10px]"
-                  >
-                    {t.common.phase} 4
-                  </Badge>
                 </div>
                 <p className="text-xs leading-relaxed text-muted-foreground">
                   USB scanner, typed student code, name search and camera fallback

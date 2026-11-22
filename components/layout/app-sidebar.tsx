@@ -19,6 +19,7 @@ type SidebarProps = {
   profile: Pick<Profile, "full_name" | "role">;
   area: StaffArea;
   areaLabel: string;
+  logoUrl?: string | null;
   onNavigate?: () => void;
 };
 
@@ -30,6 +31,7 @@ export function SidebarContent({
   profile,
   area,
   areaLabel,
+  logoUrl,
   onNavigate,
 }: SidebarProps) {
   const pathname = usePathname();
@@ -40,7 +42,7 @@ export function SidebarContent({
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
       <div className="flex items-center border-b border-sidebar-border px-5 py-5">
         <Link href="/" onClick={onNavigate} aria-label={t.app.name}>
-          <Logo variant="onDark" />
+          <Logo variant="onDark" logoUrl={logoUrl} />
         </Link>
       </div>
 

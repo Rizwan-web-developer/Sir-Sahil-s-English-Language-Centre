@@ -5,6 +5,7 @@ type LogoProps = {
   variant?: "default" | "onDark";
   size?: "sm" | "md" | "lg";
   showWordmark?: boolean;
+  logoUrl?: string | null;
   className?: string;
 };
 
@@ -28,22 +29,29 @@ export function Logo({
   variant = "default",
   size = "md",
   showWordmark = true,
+  logoUrl,
   className,
 }: LogoProps) {
   const onDark = variant === "onDark";
+  const imageSizes = { sm: "h-8 w-auto", md: "h-10 w-auto", lg: "h-12 w-auto" } as const;
 
   return (
     <span className={cn("inline-flex select-none items-center gap-3", className)}>
-      <span
-        aria-hidden
-        className={cn(
-          "relative grid shrink-0 place-items-center bg-[#15345c] font-heading font-semibold text-gold shadow-sm ring-1 ring-gold/45",
-          markSizes[size],
-        )}
-      >
-        <span className="absolute inset-[3px] rounded-[inherit] border border-gold/25" />
-        <span className="relative -translate-y-px font-serif">S</span>
-      </span>
+      {logoUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={logoUrl} alt="Institute logo" className={cn("shrink-0 object-contain", imageSizes[size])} />
+      ) : (
+        <span
+          aria-hidden
+          className={cn(
+            "relative grid shrink-0 place-items-center bg-[#15345c] font-heading font-semibold text-gold shadow-sm ring-1 ring-gold/45",
+            markSizes[size],
+          )}
+        >
+          <span className="absolute inset-[3px] rounded-[inherit] border border-gold/25" />
+          <span className="relative -translate-y-px font-serif">S</span>
+        </span>
+      )}
 
       {showWordmark && (
         <span className="flex min-w-0 flex-col leading-tight">

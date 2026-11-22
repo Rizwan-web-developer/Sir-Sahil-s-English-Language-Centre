@@ -21,6 +21,7 @@ export default async function AdminAccountPage() {
         name={profile.full_name}
         email={email}
         role={profile.role}
+        avatarUrl={profile.avatar_url}
       />
     </div>
   );

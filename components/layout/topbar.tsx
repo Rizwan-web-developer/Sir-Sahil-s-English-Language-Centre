@@ -25,6 +25,7 @@ type TopbarProps = {
   profile: Pick<Profile, "full_name" | "role">;
   area: StaffArea;
   areaLabel: string;
+  logoUrl?: string | null;
   accountHref: string;
   switchHref?: string;
   switchLabel?: string;
@@ -34,6 +35,7 @@ export function Topbar({
   profile,
   area,
   areaLabel,
+  logoUrl,
   accountHref,
   switchHref,
   switchLabel,
@@ -72,6 +74,7 @@ export function Topbar({
               profile={profile}
               area={area}
               areaLabel={areaLabel}
+              logoUrl={logoUrl}
               onNavigate={() => setOpen(false)}
             />
           </div>
@@ -86,6 +89,14 @@ export function Topbar({
       </div>
 
       <div className="ml-auto flex items-center gap-1.5">
+        {switchHref && switchLabel ? (
+          <a
+            href={switchHref}
+            className="hidden h-8 items-center rounded-lg border px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:inline-flex"
+          >
+            {switchLabel}
+          </a>
+        ) : null}
         <ThemeToggle />
         <UserMenu
           profile={profile}

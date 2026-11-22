@@ -78,7 +78,7 @@ export function SubmissionReview({ submissions, currentStatus }: { submissions: 
                   <p><span className="text-muted-foreground">Assignment:</span> {String(assignment?.title ?? "—")}</p>
                   <p><span className="text-muted-foreground">Level:</span> {String(level?.name ?? "—")}</p>
                   <p><span className="text-muted-foreground">Status:</span> <span className="capitalize">{String(selected.status)}</span></p>
-                  {selected.video_key ? <p className="text-xs text-muted-foreground">Video key: {String(selected.video_key)}</p> : <p className="text-xs text-muted-foreground">No video key (upload flow in Phase 6+)</p>}
+                  {selected.video_key ? <p className="text-xs text-muted-foreground">Video key: {String(selected.video_key)}</p> : <p className="text-xs text-muted-foreground">No video uploaded yet.</p>}
                 </div>
                 <div className="space-y-2"><Label>Marks (out of {String(assignment?.max_marks ?? 10)})</Label><Input type="number" min="0" max="100" value={marks} onChange={(e) => setMarks(e.target.value)} /></div>
                 <div className="space-y-2"><Label>Feedback</Label><Textarea value={feedback} onChange={(e) => setFeedback(e.target.value)} placeholder="Written feedback..." /></div>

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import { t } from "@/lib/i18n";
+import { getSettings, settingString } from "@/lib/settings";
 import type { Profile } from "@/types/domain";
 
 import { AppSidebar } from "./app-sidebar";
@@ -17,8 +18,10 @@ type StaffShellProps = {
  * Responsive shell shared by /admin (owner + reception) and /owner (owner).
  * Desktop: navy sidebar + topbar. Mobile: topbar + slide-over navigation.
  */
-export function StaffShell({ profile, area, children }: StaffShellProps) {
+export async function StaffShell({ profile, area, children }: StaffShellProps) {
   const areaLabel = t.areas[area];
+  const settings = await getSettings();
+  const logoUrl = settingString(settings, "institute_logo_url", "") || null;
   const isOwner = profile.role === "owner";
   const accountHref = area === "admin" ? "/admin/account" : "/owner/account";
   const switchHref = isOwner
@@ -45,6 +48,7 @@ export function StaffShell({ profile, area, children }: StaffShellProps) {
         profile={profile}
         area={area}
         areaLabel={areaLabel}
+        logoUrl={logoUrl}
       />
 
       <div className="flex min-h-dvh min-w-0 flex-col">
@@ -52,6 +56,7 @@ export function StaffShell({ profile, area, children }: StaffShellProps) {
           profile={profile}
           area={area}
           areaLabel={areaLabel}
+          logoUrl={logoUrl}
           accountHref={accountHref}
           switchHref={switchHref}
           switchLabel={switchLabel}

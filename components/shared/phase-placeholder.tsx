@@ -7,7 +7,6 @@ import { PageHeader } from "@/components/shared/page-header";
 type PhasePlaceholderProps = {
   title: string;
   description: string;
-  phase: number;
   featureTitle: string;
   featureDescription: string;
   icon: LucideIcon;
@@ -16,11 +15,10 @@ type PhasePlaceholderProps = {
   action?: ReactNode;
 };
 
-/** Page-level placeholder used while a later phase is still being built. */
+/** Page-level placeholder used while a module is still being built. */
 export function PhasePlaceholder({
   title,
   description,
-  phase,
   featureTitle,
   featureDescription,
   icon,
@@ -37,7 +35,6 @@ export function PhasePlaceholder({
         actions={action}
       />
       <FeaturePreview
-        phase={phase}
         title={featureTitle}
         description={featureDescription}
         icon={icon}

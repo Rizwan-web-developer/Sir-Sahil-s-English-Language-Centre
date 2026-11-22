@@ -1,7 +1,6 @@
 import { CheckIcon, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
-import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -9,10 +8,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { t } from "@/lib/i18n";
 
 type FeaturePreviewProps = {
-  phase: number;
   title: string;
   description: string;
   icon: LucideIcon;
@@ -25,7 +22,6 @@ type FeaturePreviewProps = {
  * Explains *what* is coming instead of showing an empty screen.
  */
 export function FeaturePreview({
-  phase,
   title,
   description,
   icon: Icon,
@@ -43,9 +39,6 @@ export function FeaturePreview({
             <CardTitle className="text-base">{title}</CardTitle>
             <CardDescription>{description}</CardDescription>
           </div>
-          <Badge variant="outline" className="border-gold/40 bg-gold/10 text-gold-foreground dark:text-gold">
-            {t.common.phase} {phase}
-          </Badge>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">

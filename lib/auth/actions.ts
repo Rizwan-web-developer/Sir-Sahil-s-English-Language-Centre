@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { requireSession } from "@/lib/auth/session";
-import { ERROR_CODES, ROLE_HOME } from "@/lib/constants";
+import { ERROR_CODES, ROLE_HOME, staffHomeForPanel } from "@/lib/constants";
 import { t } from "@/lib/i18n";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -61,7 +61,7 @@ export async function loginAction(input: LoginInput): Promise<LoginResult> {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, is_active")
+    .select("role, is_active, default_panel")
     .eq("id", authData.user.id)
     .maybeSingle();
 
@@ -75,7 +75,12 @@ export async function loginAction(input: LoginInput): Promise<LoginResult> {
     return { error: ERROR_CODES.inactive };
   }
 
-  redirect(ROLE_HOME[profile.role as UserRole]);
+  const role = profile.role as UserRole;
+  const destination =
+    role === "owner"
+      ? staffHomeForPanel(profile.default_panel as "teacher" | "management" | null)
+      : ROLE_HOME[role];
+  redirect(destination);
 }
 
 export async function logoutAction(): Promise<void> {

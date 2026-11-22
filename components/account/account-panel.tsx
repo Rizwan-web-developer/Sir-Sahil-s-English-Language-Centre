@@ -1,8 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CircleAlertIcon, KeyRoundIcon, ShieldCheckIcon } from "lucide-react";
-import { useState, useTransition } from "react";
+import { CircleAlertIcon, CameraIcon, KeyRoundIcon, ShieldCheckIcon } from "lucide-react";
+import { useRef, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -19,6 +19,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { changePasswordAction } from "@/lib/auth/actions";
+import { uploadProfileAvatarAction } from "@/lib/actions/profile";
+import { initials } from "@/lib/format";
 import { t } from "@/lib/i18n";
 import {
   changePasswordSchema,
@@ -30,11 +32,15 @@ type AccountPanelProps = {
   name: string;
   email: string;
   role: UserRole;
+  avatarUrl?: string | null;
 };
 
-export function AccountPanel({ name, email, role }: AccountPanelProps) {
+export function AccountPanel({ name, email, role, avatarUrl }: AccountPanelProps) {
   const [isPending, startTransition] = useTransition();
+  const [isUploading, startUpload] = useTransition();
   const [serverError, setServerError] = useState<string | null>(null);
+  const [currentAvatar, setCurrentAvatar] = useState<string | null>(avatarUrl ?? null);
+  const fileRef = useRef<HTMLInputElement | null>(null);
 
   const form = useForm<ChangePasswordInput>({
     resolver: zodResolver(changePasswordSchema),
@@ -67,6 +73,18 @@ export function AccountPanel({ name, email, role }: AccountPanelProps) {
     });
   }
 
+  function onAvatarChange(file: File | undefined) {
+    if (!file) return;
+    startUpload(async () => {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await uploadProfileAvatarAction(fd);
+      if (!res.ok) { toast.error(res.error); return; }
+      setCurrentAvatar(res.data.url);
+      toast.success(res.message ?? "Profile photo updated.");
+    });
+  }
+
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_1.2fr] lg:items-start">
       <Card>
@@ -78,6 +96,38 @@ export function AccountPanel({ name, email, role }: AccountPanelProps) {
           <CardDescription>{t.account.subtitle}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
+          <div className="flex items-center gap-4 rounded-lg border bg-muted/30 p-3">
+            <div className="relative">
+              <div className="grid size-16 place-items-center overflow-hidden rounded-full border bg-background text-sm font-semibold">
+                {currentAvatar ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={currentAvatar} alt={name} className="h-full w-full object-cover" />
+                ) : (
+                  initials(name)
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                className="absolute -bottom-1 -right-1 grid size-7 place-items-center rounded-full border bg-background text-muted-foreground shadow-sm hover:text-foreground"
+                aria-label="Upload profile photo"
+                disabled={isUploading}
+              >
+                <CameraIcon className="size-3.5" />
+              </button>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                className="hidden"
+                onChange={(e) => onAvatarChange(e.target.files?.[0])}
+              />
+            </div>
+            <div className="min-w-0">
+              <p className="font-medium">{name}</p>
+              <p className="text-xs text-muted-foreground">{isUploading ? "Uploading..." : "Profile photo (circle)"}</p>
+            </div>
+          </div>
           <div className="rounded-lg border bg-muted/30 p-3">
             <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
               {t.account.name}

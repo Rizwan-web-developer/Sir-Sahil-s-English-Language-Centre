@@ -22,6 +22,7 @@ export default async function PortalAccountPage() {
         name={profile.full_name}
         email={email}
         role={profile.role}
+        avatarUrl={profile.avatar_url}
       />
       <ProfileChangeRequest />
     </div>

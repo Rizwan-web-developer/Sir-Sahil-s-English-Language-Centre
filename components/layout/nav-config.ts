@@ -41,7 +41,7 @@ export interface NavGroup {
 
 export type StaffArea = "admin" | "owner";
 
-/** Navigation for the shared admin area and the owner teaching panel. */
+/** Navigation for the Teacher panel and Admin Management panel. */
 export function getStaffNav(role: UserRole, area: StaffArea): NavGroup[] {
   if (area === "owner") {
     return [
@@ -57,46 +57,21 @@ export function getStaffNav(role: UserRole, area: StaffArea): NavGroup[] {
         ],
       },
       {
-        label: t.nav.instituteGroup,
-        items: [
-          { label: t.nav.dashboard, href: "/admin", icon: ChartColumn, exact: true },
-          { label: t.nav.students, href: "/admin/students", icon: Users },
-          { label: t.nav.fees, href: "/admin/fees", icon: Wallet },
-        ],
-      },
-      {
         label: t.nav.systemGroup,
         items: [{ label: t.nav.account, href: "/owner/account", icon: UserRound }],
       },
     ];
   }
 
-  const groups: NavGroup[] = [
-    {
-      label: t.nav.workspace,
-      items: [
-        { label: t.nav.dashboard, href: "/admin", icon: LayoutDashboard, exact: true },
-        { label: t.nav.students, href: "/admin/students", icon: Users },
-        { label: t.nav.batches, href: "/admin/batches", icon: Layers },
-        { label: t.nav.attendance, href: "/admin/attendance", icon: ScanLine },
-        { label: t.nav.fees, href: "/admin/fees", icon: Wallet },
-        { label: "Announcements", href: "/admin/announcements", icon: Megaphone },
-        { label: t.nav.reports, href: "/admin/reports", icon: ChartColumn },
-      ],
-    },
+  const managementItems: NavItem[] = [
+    { label: t.nav.dashboard, href: "/admin", icon: LayoutDashboard, exact: true },
+    { label: t.nav.students, href: "/admin/students", icon: Users },
+    { label: t.nav.batches, href: "/admin/batches", icon: Layers },
+    { label: t.nav.attendance, href: "/admin/attendance", icon: ScanLine },
+    { label: t.nav.fees, href: "/admin/fees", icon: Wallet },
+    { label: "Announcements", href: "/admin/announcements", icon: Megaphone },
+    { label: t.nav.reports, href: "/admin/reports", icon: ChartColumn },
   ];
-
-  if (role === "owner") {
-    groups.push({
-      label: t.nav.teachingGroup,
-      items: [
-        { label: t.nav.overview, href: "/owner", icon: GraduationCap, exact: true },
-        { label: t.nav.assignments, href: "/owner/assignments", icon: ClipboardCheck },
-        { label: t.nav.rankings, href: "/owner/rankings", icon: Trophy },
-        { label: t.nav.certificates, href: "/owner/certificates", icon: Award },
-      ],
-    });
-  }
 
   const systemItems: NavItem[] = [
     { label: t.nav.settings, href: "/admin/settings", icon: Settings },
@@ -105,9 +80,11 @@ export function getStaffNav(role: UserRole, area: StaffArea): NavGroup[] {
     systemItems.push({ label: "Audit log", href: "/admin/audit-log", icon: ScrollText });
   }
   systemItems.push({ label: t.nav.account, href: "/admin/account", icon: UserRound });
-  groups.push({ label: t.nav.systemGroup, items: systemItems });
 
-  return groups;
+  return [
+    { label: t.nav.workspace, items: managementItems },
+    { label: t.nav.systemGroup, items: systemItems },
+  ];
 }
 
 export const portalTabs: NavItem[] = [
