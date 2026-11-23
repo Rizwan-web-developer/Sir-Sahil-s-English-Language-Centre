@@ -30,7 +30,6 @@ export default async function EditBatchPage({ params }: { params: Promise<{ id: 
           class_type: String(batch.class_type) as "weekday" | "weekend",
           start_date: String(batch.start_date),
           start_time: String(batch.start_time).slice(0, 5),
-          capacity: Number(batch.capacity),
           status: String(batch.status) as "active" | "closed",
           notes: String(batch.notes ?? ""),
           weekdays: weekdays.length ? weekdays : [1, 2, 3, 4, 5],

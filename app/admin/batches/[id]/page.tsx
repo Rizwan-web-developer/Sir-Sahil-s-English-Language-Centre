@@ -31,7 +31,7 @@ export default async function BatchDetailPage({ params }: { params: Promise<{ id
       <PageHeader
         eyebrow="Batch"
         title={String(batch.name)}
-        description={`${String(batch.class_type)} · starts ${formatTime(String(batch.start_time))} · capacity ${String(batch.capacity)}`}
+        description={`${String(batch.class_type)} · starts ${formatTime(String(batch.start_time))}`}
         actions={<Button nativeButton={false} variant="outline" render={<Link href={`/admin/batches/${id}/edit`} />}>Edit batch</Button>}
       />
 

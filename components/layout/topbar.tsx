@@ -4,7 +4,6 @@ import { MenuIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
-import { ScannerModeToggle } from "@/components/attendance/attendance-center";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -79,7 +78,6 @@ export function Topbar({ profile, area, areaLabel, logoUrl, accountHref, account
       </div>
 
       <div className="ml-auto flex items-center gap-1.5">
-        {area === "admin" && <ScannerModeToggle />}
         <ThemeToggle />
         <UserMenu profile={profile} accountHref={accountHref} menuLabel={accountLabel} />
       </div>

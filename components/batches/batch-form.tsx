@@ -9,6 +9,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { createBatchAction, updateBatchAction } from "@/lib/actions/batches";
+import { formatTime } from "@/lib/format";
 import { batchFormSchema, type BatchFormInput, type BatchFormValues } from "@/lib/validation/batches";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -54,7 +55,6 @@ export function BatchForm({ mode = "create", initial }: Props) {
       class_type: initial?.class_type ?? "weekday",
       start_date: initial?.start_date ?? new Date().toISOString().slice(0, 10),
       start_time: initial?.start_time ?? "14:00",
-      capacity: initial?.capacity ?? 20,
       status: initial?.status ?? "active",
       notes: initial?.notes ?? "",
       weekdays: initial?.weekdays ?? [1, 2, 3, 4, 5],
@@ -103,7 +103,6 @@ export function BatchForm({ mode = "create", initial }: Props) {
           </div>
           <div className="space-y-2"><Label>Start date *</Label><Input type="date" {...form.register("start_date")} /></div>
           <div className="space-y-2"><Label>Batch start time *</Label><Input type="time" {...form.register("start_time")} onChange={(e) => { form.register("start_time").onChange(e); form.setValue("schedule", buildSchedule((form.getValues("weekdays") ?? [1, 2, 3, 4, 5]) as number[], e.target.value)); }} /></div>
-          <div className="space-y-2"><Label>Capacity *</Label><Input type="number" min="1" {...form.register("capacity")} /></div>
           <div className="space-y-2"><Label>Status</Label>
             <Select value={form.watch("status")} onValueChange={(v) => form.setValue("status", v === "closed" ? "closed" : "active")}>
               <SelectTrigger><SelectValue /></SelectTrigger>
@@ -127,8 +126,8 @@ export function BatchForm({ mode = "create", initial }: Props) {
                   <tr key={`${s.day_of_week}-${s.session_type}-${i}`} className="border-t">
                     <td className="p-2">{DAYS.find((d) => d.value === s.day_of_week)?.label}</td>
                     <td className="p-2 capitalize">{s.session_type}</td>
-                    <td className="p-2">{s.start_time}</td>
-                    <td className="p-2">{s.end_time}</td>
+                    <td className="p-2">{formatTime(s.start_time)}</td>
+                    <td className="p-2">{formatTime(s.end_time)}</td>
                   </tr>
                 ))}
               </tbody>

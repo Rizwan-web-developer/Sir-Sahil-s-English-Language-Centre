@@ -17,7 +17,6 @@ export const batchFormSchema = z
     class_type: classTypeSchema,
     start_date: z.string().min(1, "Start date is required."),
     start_time: z.string().regex(/^\d{2}:\d{2}$/, "Use HH:MM format."),
-    capacity: z.coerce.number().int().min(1, "Capacity must be at least 1.").max(200),
     status: batchStatusSchema.default("active"),
     notes: z.string().trim().max(1000).optional().or(z.literal("")),
     weekdays: z.array(z.coerce.number().int().min(1).max(7)).default([1, 2, 3, 4, 5]),

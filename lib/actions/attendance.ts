@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { requireStaff } from "@/lib/auth/session";
-import { currentMonthStart, isoDayOfWeek, nowTimeInKarachi, todayInKarachi } from "@/lib/format";
+import { currentMonthStart, formatMonth, isoDayOfWeek, nowTimeInKarachi, todayInKarachi } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { normalizeStudentCode } from "@/lib/utils/barcode";
 import type { SessionType } from "@/types/domain";
@@ -362,6 +362,133 @@ export async function quickAttendanceAction(args: {
       fee,
     },
     message: "Attendance marked.",
+  };
+}
+
+export async function searchAttendanceStudentsAction(query: string): Promise<
+  ActionResult<Array<{ id: string; full_name: string; student_code: string; student_number: number; photo_url: string | null; status: string }>>
+> {
+  await requireStaff();
+  const supabase = await createClient();
+  const q = query.trim();
+  if (!q) return { ok: true, data: [] };
+
+  let req = supabase
+    .from("students")
+    .select("id, full_name, student_code, student_number, photo_url, status")
+    .eq("is_archived", false)
+    .order("full_name")
+    .limit(10);
+
+  const like = `%${q}%`;
+  const filters = [`full_name.ilike.${like}`, `student_code.ilike.${like}`];
+  if (/^\d+$/.test(q)) filters.push(`student_number.eq.${q}`);
+  req = req.or(filters.join(","));
+
+  const { data, error } = await req;
+  if (error) return { ok: false, error: error.message };
+  return {
+    ok: true,
+    data: (data ?? []).map((r) => {
+      const row = r as Record<string, unknown>;
+      return {
+        id: String(row.id),
+        full_name: String(row.full_name),
+        student_code: String(row.student_code),
+        student_number: Number(row.student_number ?? 0),
+        photo_url: (row.photo_url as string | null) ?? null,
+        status: String(row.status),
+      };
+    }),
+  };
+}
+
+export async function getAttendanceStudentDetailAction(studentId: string): Promise<
+  ActionResult<{
+    student: StudentSummary & { status: string };
+    today: string;
+    todayAttendance: { status: string; session_type: SessionType; batch_name: string | null } | null;
+    fees: Array<{ period: string; label: string; status: string; paidInFull: boolean; amountDue: number; amountPaid: number; balance: number; isFuture: boolean; isCurrent: boolean }>;
+  }>
+> {
+  await requireStaff();
+  const supabase = await createClient();
+  const today = todayInKarachi();
+
+  const { data: studentRow, error: sErr } = await supabase
+    .from("students")
+    .select("id, full_name, student_code, student_number, photo_url, status, is_archived, admission_date")
+    .eq("id", studentId)
+    .maybeSingle();
+  if (sErr || !studentRow || (studentRow as Record<string, unknown>).is_archived) {
+    return { ok: false, error: "Student not found." };
+  }
+  const s = studentRow as Record<string, unknown>;
+
+  // Today's attendance (any grammar session today)
+  const { data: attRows } = await supabase
+    .from("attendance")
+    .select("status, session_type, batch:batches(name)")
+    .eq("student_id", studentId)
+    .eq("date", today)
+    .order("marked_at", { ascending: false })
+    .limit(1);
+  const att = (attRows?.[0] as Record<string, unknown> | undefined) ?? undefined;
+  const attBatch = (Array.isArray(att?.batch) ? att?.batch[0] : att?.batch) as Record<string, unknown> | null | undefined;
+  const todayAttendance = att
+    ? { status: String(att.status), session_type: "grammar" as SessionType, batch_name: attBatch?.name ? String(attBatch.name) : null }
+    : null;
+
+  // 6-month fee window starting from admission month
+  const admission = String(s.admission_date ?? today).slice(0, 10);
+  const start = new Date(admission.slice(0, 7) + "-01T00:00:00Z");
+  const months: string[] = [];
+  for (let i = 0; i < 6; i++) {
+    const d = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + i, 1));
+    months.push(d.toISOString().slice(0, 10));
+  }
+  const currentMonth = currentMonthStart();
+
+  const { data: feeRows } = await supabase
+    .from("fee_records")
+    .select("period_month, amount_due, discount, amount_paid, status")
+    .eq("student_id", studentId)
+    .in("period_month", months);
+
+  const feeMap = new Map<string, Record<string, unknown>>();
+  for (const r of feeRows ?? []) {
+    const row = r as Record<string, unknown>;
+    feeMap.set(String(row.period_month).slice(0, 10), row);
+  }
+
+  const fees = months.map((period) => {
+    const row = feeMap.get(period);
+    const amountDue = row ? Number(row.amount_due ?? 0) - Number(row.discount ?? 0) : 0;
+    const amountPaid = row ? Number(row.amount_paid ?? 0) : 0;
+    const balance = Math.max(0, amountDue - amountPaid);
+    const status = row ? String(row.status ?? "pending") : "no_record";
+    const paidInFull = status === "paid" || status === "waived" || (row ? balance <= 0 : false);
+    return {
+      period,
+      label: formatMonth(period),
+      status,
+      paidInFull,
+      amountDue,
+      amountPaid,
+      balance,
+      isFuture: period > currentMonth,
+      isCurrent: period === currentMonth,
+    };
+  });
+
+  return {
+    ok: true,
+    data: {
+      student: { ...summarizeStudent(s), status: String(s.status) },
+      today,
+      todayAttendance,
+      fees,
+    },
   };
 }
 

@@ -23,7 +23,7 @@ export default async function BatchesPage() {
       <PageHeader
         eyebrow="Timetable"
         title="Batches"
-        description="Weekday and weekend batches, schedules, and capacity."
+        description="Weekday and weekend batches and schedules."
         actions={
           <div className="flex gap-2">
             <Button nativeButton={false} variant="outline" render={<Link href="/admin/batches/timetable" />}>Timetable</Button>
@@ -44,7 +44,7 @@ export default async function BatchesPage() {
                     <TableCell><Link href={`/admin/batches/${String(b.id)}`} className="font-medium hover:underline">{String(b.name)}</Link></TableCell>
                     <TableCell className="capitalize">{String(b.class_type)}</TableCell>
                     <TableCell>{formatTime(String(b.start_time))}</TableCell>
-                    <TableCell>{String(b.studentCount)} / {String(b.capacity)}</TableCell>
+                    <TableCell>{String(b.studentCount)}</TableCell>
                     <TableCell><Badge variant="outline" className="capitalize">{String(b.status)}</Badge></TableCell>
                   </TableRow>
                 ))}
