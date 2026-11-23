@@ -65,7 +65,6 @@ export function getStaffNav(_role: UserRole, area: StaffArea): NavGroup[] {
 
   return [
     {
-      label: "Management",
       items: [
         { label: "Dashboard", href: "/admin", icon: LayoutDashboard, exact: true },
         { label: t.nav.students, href: "/admin/students", icon: Users },

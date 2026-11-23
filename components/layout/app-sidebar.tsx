@@ -6,7 +6,7 @@ import { LogOutIcon } from "lucide-react";
 import { useTransition } from "react";
 
 import { Logo } from "@/components/brand/logo";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { t } from "@/lib/i18n";
 import { initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -16,7 +16,7 @@ import type { Profile } from "@/types/domain";
 import { getStaffNav, isNavActive, type StaffArea } from "./nav-config";
 
 type SidebarProps = {
-  profile: Pick<Profile, "full_name" | "role">;
+  profile: Pick<Profile, "full_name" | "role" | "avatar_url">;
   area: StaffArea;
   areaLabel: string;
   logoUrl?: string | null;
@@ -30,7 +30,7 @@ type SidebarProps = {
 export function SidebarContent({
   profile,
   area,
-  areaLabel,
+  areaLabel: _areaLabel,
   logoUrl,
   onNavigate,
 }: SidebarProps) {
@@ -46,21 +46,7 @@ export function SidebarContent({
         </Link>
       </div>
 
-      <div className="px-4 pt-4">
-        <div className="flex items-center justify-between gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-          <div className="min-w-0">
-            <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-white/45">
-              {areaLabel}
-            </p>
-            <p className="truncate text-xs font-medium text-white/85">
-              {profile.full_name}
-            </p>
-          </div>
-          <span className="shrink-0 rounded-full bg-gold/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-gold">
-            {t.roles[profile.role]}
-          </span>
-        </div>
-      </div>
+      <div className="px-4 pt-4" />
 
       <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-5">
         {groups.map((group, index) => (
@@ -107,6 +93,7 @@ export function SidebarContent({
       <div className="border-t border-sidebar-border p-3">
         <div className="flex items-center gap-3 rounded-lg px-2 py-2">
           <Avatar className="size-8 ring-1 ring-white/15">
+            {profile.avatar_url ? <AvatarImage src={profile.avatar_url} alt={profile.full_name} /> : null}
             <AvatarFallback className="bg-white/10 text-xs font-medium text-gold">
               {initials(profile.full_name)}
             </AvatarFallback>

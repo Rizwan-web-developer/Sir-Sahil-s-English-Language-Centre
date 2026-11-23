@@ -22,7 +22,7 @@ import { ThemeToggle } from "./theme-toggle";
 import { UserMenu } from "./user-menu";
 
 type TopbarProps = {
-  profile: Pick<Profile, "full_name" | "role">;
+  profile: Pick<Profile, "full_name" | "role" | "avatar_url">;
   area: StaffArea;
   areaLabel: string;
   logoUrl?: string | null;

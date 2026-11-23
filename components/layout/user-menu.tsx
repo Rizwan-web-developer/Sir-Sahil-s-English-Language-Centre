@@ -4,7 +4,7 @@ import { CheckIcon, ChevronDownIcon, LogOutIcon, UserRoundIcon } from "lucide-re
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,7 +20,7 @@ import { t } from "@/lib/i18n";
 import type { Profile } from "@/types/domain";
 
 type UserMenuProps = {
-  profile: Pick<Profile, "full_name" | "role">;
+  profile: Pick<Profile, "full_name" | "role" | "avatar_url">;
   accountHref: string;
 };
 
@@ -35,6 +35,7 @@ export function UserMenu({ profile, accountHref }: UserMenuProps) {
         className="flex items-center gap-2 rounded-full py-1 pl-1 pr-2 outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 data-popup-open:bg-muted"
       >
         <Avatar size="sm" className="size-8">
+          {profile.avatar_url ? <AvatarImage src={profile.avatar_url} alt={profile.full_name} /> : null}
           <AvatarFallback className="bg-primary text-xs font-semibold text-primary-foreground">
             {initials(profile.full_name)}
           </AvatarFallback>
