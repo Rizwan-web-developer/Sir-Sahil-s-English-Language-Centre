@@ -30,7 +30,6 @@ type SidebarProps = {
 export function SidebarContent({
   profile,
   area,
-  areaLabel: _areaLabel,
   logoUrl,
   onNavigate,
 }: SidebarProps) {
@@ -40,15 +39,13 @@ export function SidebarContent({
 
   return (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
-      <div className="flex items-center border-b border-sidebar-border px-5 py-5">
+      <div className="flex items-center border-b border-sidebar-border px-5 py-4">
         <Link href="/" onClick={onNavigate} aria-label={t.app.name}>
           <Logo variant="onDark" logoUrl={logoUrl} />
         </Link>
       </div>
 
-      <div className="px-4 pt-4" />
-
-      <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-5">
+      <nav className="flex-1 space-y-6 overflow-y-auto px-3 pb-5 pt-4">
         {groups.map((group, index) => (
           <div key={group.label ?? index} className="space-y-1.5">
             {group.label && (
@@ -60,19 +57,8 @@ export function SidebarContent({
               const active = isNavActive(pathname, item);
               const Icon = item.icon;
 
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={onNavigate}
-                  aria-current={active ? "page" : undefined}
-                  className={cn(
-                    "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
-                    active
-                      ? "bg-white/10 font-medium text-white shadow-sm ring-1 ring-white/10"
-                      : "text-white/65 hover:bg-white/5 hover:text-white",
-                  )}
-                >
+              const inner = (
+                <>
                   <Icon
                     className={cn(
                       "size-4 shrink-0 transition-colors",
@@ -83,6 +69,43 @@ export function SidebarContent({
                   {active && (
                     <span className="ml-auto size-1.5 rounded-full bg-gold" aria-hidden />
                   )}
+                </>
+              );
+
+              const itemClass = cn(
+                "group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+                active
+                  ? "bg-white/10 font-medium text-white shadow-sm ring-1 ring-white/10"
+                  : "text-white/65 hover:bg-white/5 hover:text-white",
+              );
+
+              // Attendance opens the popup instead of navigating.
+              if (item.dialog === "attendance") {
+                return (
+                  <button
+                    key={item.href}
+                    type="button"
+                    aria-haspopup="dialog"
+                    onClick={() => {
+                      onNavigate?.();
+                      window.dispatchEvent(new CustomEvent("selc:open-attendance"));
+                    }}
+                    className={cn(itemClass, "text-left")}
+                  >
+                    {inner}
+                  </button>
+                );
+              }
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={onNavigate}
+                  aria-current={active ? "page" : undefined}
+                  className={itemClass}
+                >
+                  {inner}
                 </Link>
               );
             })}

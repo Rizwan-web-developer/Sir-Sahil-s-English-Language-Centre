@@ -53,6 +53,8 @@ export interface Profile {
 export interface Student {
   id: string;
   student_code: string;
+  /** Short numeric ID (3306, 3307, ...) used on QR codes and attendance. */
+  student_number: number;
   profile_id: string | null;
   full_name: string;
   father_name: string | null;

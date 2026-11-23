@@ -66,7 +66,7 @@ async function findDuplicateStudent(input: {
 
 export async function createStudentAction(
   raw: StudentFormInput,
-): Promise<ActionResult<{ studentId: string; studentCode: string; tempPassword: string }>> {
+): Promise<ActionResult<{ studentId: string; studentCode: string; studentNumber: number; tempPassword: string }>> {
   await requireStaff();
   const parsed = studentFormSchema.safeParse(raw);
   if (!parsed.success) {
@@ -131,7 +131,7 @@ export async function createStudentAction(
         .join("\n") || null,
       is_archived: false,
     })
-    .select("id, student_code")
+    .select("id, student_code, student_number")
     .single();
 
   if (insertError || !student) {
@@ -157,7 +157,12 @@ export async function createStudentAction(
   revalidatePath("/admin/batches");
   return {
     ok: true,
-    data: { studentId: student.id, studentCode: student.student_code, tempPassword },
+    data: {
+      studentId: student.id,
+      studentCode: student.student_code,
+      studentNumber: Number(student.student_number),
+      tempPassword,
+    },
     message: "Student created.",
   };
 }

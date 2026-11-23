@@ -14,7 +14,7 @@ export default async function SettingsPage() {
   for (const [k, v] of Object.entries(settings)) initial[k] = typeof v === "string" ? v : String(v ?? "");
   return (
     <div className="space-y-6">
-      <PageHeader eyebrow="Owner only" title="Settings" description="Institute configuration, branding, payment details, and thresholds." />
+      <PageHeader eyebrow="Management" title="Settings" description="Management and institute name, logo, phone, and address." />
       <SettingsForm initial={initial} />
     </div>
   );

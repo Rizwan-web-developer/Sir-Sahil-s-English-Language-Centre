@@ -5,6 +5,7 @@ import { getSettings, settingString } from "@/lib/settings";
 import type { Profile } from "@/types/domain";
 
 import { AppSidebar } from "./app-sidebar";
+import { AttendanceCenter } from "@/components/attendance/attendance-center";
 import type { StaffArea } from "./nav-config";
 import { Topbar } from "./topbar";
 
@@ -22,7 +23,8 @@ export async function StaffShell({ profile, area, children }: StaffShellProps) {
   const areaLabel = t.areas[area];
   const settings = await getSettings();
   const logoUrl = settingString(settings, "institute_logo_url", "") || null;
-  const accountHref = area === "admin" ? "/admin/account" : "/owner/account";
+  const accountHref = area === "admin" ? "/admin/settings" : "/owner/account";
+  const accountLabel = area === "admin" ? "Settings" : undefined;
 
   return (
     <div className="min-h-dvh bg-background md:grid md:grid-cols-[17rem_minmax(0,1fr)]">
@@ -40,6 +42,8 @@ export async function StaffShell({ profile, area, children }: StaffShellProps) {
         logoUrl={logoUrl}
       />
 
+      <AttendanceCenter area={area} />
+
       <div className="flex min-h-dvh min-w-0 flex-col">
         <Topbar
           profile={profile}
@@ -47,6 +51,7 @@ export async function StaffShell({ profile, area, children }: StaffShellProps) {
           areaLabel={areaLabel}
           logoUrl={logoUrl}
           accountHref={accountHref}
+          accountLabel={accountLabel}
         />
 
         <main id="main-content" className="flex-1">

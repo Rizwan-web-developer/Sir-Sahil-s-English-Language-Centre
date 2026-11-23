@@ -1,11 +1,13 @@
 "use client";
 
 import { StudentBarcode } from "@/components/students/student-barcode";
+import { StudentQr } from "@/components/students/student-qr";
 
 type IdCardProps = {
   student: {
     full_name: string;
     student_code: string;
+    student_number: number;
     photo_url?: string | null;
     batch_name?: string | null;
     timing?: string | null;
@@ -41,15 +43,17 @@ export function StudentIdCard({
           </div>
           <div className="min-w-0 text-xs space-y-1">
             <p className="font-semibold text-sm leading-tight">{student.full_name}</p>
+            <p><span className="text-slate-500">ID No:</span> <span className="font-mono font-semibold">{student.student_number}</span></p>
             <p><span className="text-slate-500">Code:</span> <span className="font-mono">{student.student_code}</span></p>
             <p><span className="text-slate-500">Batch:</span> {student.batch_name || "—"}</p>
             <p><span className="text-slate-500">Timing:</span> {student.timing || "—"}</p>
           </div>
         </div>
-        <div className="px-4 pb-4">
-          <div className="rounded-md bg-slate-50 p-2 flex justify-center">
-            <StudentBarcode value={student.student_code} height={48} width={1.6} />
+        <div className="flex items-center gap-3 px-4 pb-4">
+          <div className="flex-1 rounded-md bg-slate-50 p-2 flex justify-center">
+            <StudentBarcode value={String(student.student_number)} height={44} width={1.6} />
           </div>
+          <StudentQr value={student.student_number} size={72} />
         </div>
       </div>
 

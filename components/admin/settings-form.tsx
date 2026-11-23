@@ -9,86 +9,98 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 
 type Props = { initial: Record<string, string> };
 
-const fields: Array<{ key: string; label: string; multiline?: boolean }> = [
-  { key: "institute_name", label: "Institute name" },
-  { key: "institute_phone", label: "Phone" },
-  { key: "institute_address", label: "Address", multiline: true },
-  { key: "receipt_footer", label: "Receipt footer", multiline: true },
-  { key: "attendance_threshold", label: "Attendance threshold (%)" },
-  { key: "min_assignment_average", label: "Minimum assignment average (%)" },
-  { key: "fee_due_day", label: "Fee due day" },
-  { key: "payment_jazzcash", label: "JazzCash details", multiline: true },
-  { key: "payment_easypaisa", label: "Easypaisa details", multiline: true },
-  { key: "payment_bank", label: "Bank details", multiline: true },
-];
+function LogoUpload({ type, url, onChange }: { type: "management" | "institute"; url: string; onChange: (url: string) => void }) {
+  const ref = useRef<HTMLInputElement | null>(null);
+  const [isUploading, startUpload] = useTransition();
 
-export function SettingsForm({ initial }: Props) {
-  const [values, setValues] = useState<Record<string, string>>(initial);
-  const [isPending, startTransition] = useTransition();
-  const [isUploadingLogo, startLogoUpload] = useTransition();
-  const logoRef = useRef<HTMLInputElement | null>(null);
-  const logoUrl = values.institute_logo_url || "";
-
-  function save() {
-    startTransition(async () => {
-      const res = await updateSettingsAction(values);
-      if (!res.ok) toast.error(res.error); else toast.success(res.message ?? "Saved");
-    });
-  }
-
-  function onLogoChange(file: File | undefined) {
+  function upload(file: File | undefined) {
     if (!file) return;
-    startLogoUpload(async () => {
+    startUpload(async () => {
       const fd = new FormData();
       fd.append("file", file);
+      fd.append("type", type);
       const res = await uploadInstituteLogoAction(fd);
       if (!res.ok) { toast.error(res.error); return; }
-      setValues((v) => ({ ...v, institute_logo_url: res.data.url }));
+      onChange(res.data.url);
       toast.success(res.message ?? "Logo updated");
     });
   }
 
   return (
-    <Card>
-      <CardHeader><CardTitle>Institute settings</CardTitle></CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-2">
-          <Label>Platform logo</Label>
-          <div className="flex flex-wrap items-center gap-4 rounded-lg border p-4">
-            {logoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={logoUrl} alt="Platform logo" className="h-14 w-auto max-w-[180px] object-contain" />
-            ) : (
-              <div className="text-sm text-muted-foreground">No logo uploaded</div>
-            )}
-            <div className="flex items-center gap-2">
-              <input ref={logoRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={(e) => onLogoChange(e.target.files?.[0])} />
-              <Button type="button" variant="outline" onClick={() => logoRef.current?.click()} disabled={isUploadingLogo}>
-                {isUploadingLogo ? "Uploading..." : "Upload logo"}
-              </Button>
+    <div className="flex flex-wrap items-center gap-4 rounded-lg border p-4">
+      {url ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={url} alt={`${type} logo`} className="h-14 w-auto max-w-[180px] object-contain" />
+      ) : (
+        <div className="text-sm text-muted-foreground">No logo uploaded</div>
+      )}
+      <input ref={ref} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={(e) => upload(e.target.files?.[0])} />
+      <Button type="button" variant="outline" onClick={() => ref.current?.click()} disabled={isUploading}>
+        {isUploading ? "Uploading..." : "Upload logo"}
+      </Button>
+    </div>
+  );
+}
+
+export function SettingsForm({ initial }: Props) {
+  const [values, setValues] = useState<Record<string, string>>(initial);
+  const [isPending, startTransition] = useTransition();
+
+  const allowed = ["management_name", "management_logo_url", "institute_name", "institute_phone", "institute_address", "institute_logo_url"];
+
+  function save() {
+    startTransition(async () => {
+      const payload: Record<string, string> = {};
+      for (const key of allowed) payload[key] = values[key] ?? "";
+      const res = await updateSettingsAction(payload);
+      if (!res.ok) toast.error(res.error); else toast.success(res.message ?? "Saved");
+    });
+  }
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader><CardTitle>Management</CardTitle></CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>Management logo</Label>
+            <LogoUpload type="management" url={values.management_logo_url ?? ""} onChange={(url) => setValues((v) => ({ ...v, management_logo_url: url }))} />
+          </div>
+          <div className="space-y-2">
+            <Label>Management name</Label>
+            <Input value={values.management_name ?? ""} onChange={(e) => setValues((v) => ({ ...v, management_name: e.target.value }))} placeholder="Management" />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle>Institute</CardTitle></CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>Institute logo</Label>
+            <LogoUpload type="institute" url={values.institute_logo_url ?? ""} onChange={(url) => setValues((v) => ({ ...v, institute_logo_url: url }))} />
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Institute name</Label>
+              <Input value={values.institute_name ?? ""} onChange={(e) => setValues((v) => ({ ...v, institute_name: e.target.value }))} />
+            </div>
+            <div className="space-y-2">
+              <Label>Phone number</Label>
+              <Input value={values.institute_phone ?? ""} onChange={(e) => setValues((v) => ({ ...v, institute_phone: e.target.value }))} />
             </div>
           </div>
-          <p className="text-xs text-muted-foreground">Simple PNG/logo image. No background box will be added on the platform.</p>
-        </div>
+          <div className="space-y-2">
+            <Label>Address</Label>
+            <Input value={values.institute_address ?? ""} onChange={(e) => setValues((v) => ({ ...v, institute_address: e.target.value }))} />
+          </div>
+        </CardContent>
+      </Card>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          {fields.map((f) => (
-            <div key={f.key} className={f.multiline ? "space-y-2 md:col-span-2" : "space-y-2"}>
-              <Label>{f.label}</Label>
-              {f.multiline ? (
-                <Textarea value={values[f.key] ?? ""} onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))} />
-              ) : (
-                <Input value={values[f.key] ?? ""} onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))} />
-              )}
-            </div>
-          ))}
-        </div>
-        <Button onClick={save} disabled={isPending}>Save settings</Button>
-      </CardContent>
-    </Card>
+      <Button onClick={save} disabled={isPending}>{isPending ? "Saving..." : "Save settings"}</Button>
+    </div>
   );
 }

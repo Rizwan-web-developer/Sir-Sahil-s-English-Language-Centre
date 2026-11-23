@@ -88,6 +88,19 @@ export function todayInKarachi(): string {
   }).format(new Date());
 }
 
+/** Current time in Pakistan as HH:MM (24h). */
+export function nowTimeInKarachi(): string {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: DATE_TIME_ZONE,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(new Date());
+  const hour = parts.find((p) => p.type === "hour")?.value ?? "00";
+  const minute = parts.find((p) => p.type === "minute")?.value ?? "00";
+  return `${hour}:${minute}`;
+}
+
 /** First day of the current month as YYYY-MM-DD (Karachi). */
 export function currentMonthStart(): string {
   return `${todayInKarachi().slice(0, 7)}-01`;

@@ -4,6 +4,7 @@ import { MenuIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
+import { ScannerModeToggle } from "@/components/attendance/attendance-center";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -27,9 +28,10 @@ type TopbarProps = {
   areaLabel: string;
   logoUrl?: string | null;
   accountHref: string;
+  accountLabel?: string;
 };
 
-export function Topbar({ profile, area, areaLabel, logoUrl, accountHref }: TopbarProps) {
+export function Topbar({ profile, area, areaLabel, logoUrl, accountHref, accountLabel }: TopbarProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const groups = getStaffNav(profile.role, area);
@@ -77,8 +79,9 @@ export function Topbar({ profile, area, areaLabel, logoUrl, accountHref }: Topba
       </div>
 
       <div className="ml-auto flex items-center gap-1.5">
+        {area === "admin" && <ScannerModeToggle />}
         <ThemeToggle />
-        <UserMenu profile={profile} accountHref={accountHref} />
+        <UserMenu profile={profile} accountHref={accountHref} menuLabel={accountLabel} />
       </div>
     </header>
   );

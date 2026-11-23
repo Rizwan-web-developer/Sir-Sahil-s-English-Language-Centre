@@ -22,9 +22,10 @@ import type { Profile } from "@/types/domain";
 type UserMenuProps = {
   profile: Pick<Profile, "full_name" | "role" | "avatar_url">;
   accountHref: string;
+  menuLabel?: string;
 };
 
-export function UserMenu({ profile, accountHref }: UserMenuProps) {
+export function UserMenu({ profile, accountHref, menuLabel }: UserMenuProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -64,7 +65,7 @@ export function UserMenu({ profile, accountHref }: UserMenuProps) {
         <DropdownMenuSeparator />
         <DropdownMenuItem className="gap-2" onClick={() => router.push(accountHref)}>
           <UserRoundIcon className="size-4 text-muted-foreground" />
-          {t.common.account}
+          {menuLabel ?? t.common.account}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem

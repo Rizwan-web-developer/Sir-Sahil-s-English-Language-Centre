@@ -41,6 +41,7 @@ export async function uploadProfileAvatarAction(formData: FormData): Promise<Res
 }
 
 export async function uploadInstituteLogoAction(formData: FormData): Promise<Result<{ url: string }>> {
+  const type = String(formData.get("type") ?? "institute") === "management" ? "management" : "institute";
   const session = await requireStaff();
   const file = formData.get("file");
   if (!(file instanceof File) || !file.size) return { ok: false, error: "Please select a PNG/logo image." };
@@ -49,7 +50,7 @@ export async function uploadInstituteLogoAction(formData: FormData): Promise<Res
 
   const supabase = await createClient();
   const ext = extFromName(file.name);
-  const path = `branding/logo.${ext}`;
+  const path = `branding/${type}-logo.${ext}`;
   const bytes = new Uint8Array(await file.arrayBuffer());
   const { error: uploadError } = await supabase.storage.from("avatars").upload(path, bytes, {
     upsert: true,
@@ -60,9 +61,10 @@ export async function uploadInstituteLogoAction(formData: FormData): Promise<Res
 
   const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
   const url = `${pub.publicUrl}?t=${Date.now()}`;
-  const { error } = await supabase.from("settings").upsert({ key: "institute_logo_url", value: url, updated_by: session.profile.id }, { onConflict: "key" });
+  const key = type === "management" ? "management_logo_url" : "institute_logo_url";
+  const { error } = await supabase.from("settings").upsert({ key, value: url, updated_by: session.profile.id }, { onConflict: "key" });
   if (error) return { ok: false, error: error.message };
 
   revalidatePath("/", "layout");
-  return { ok: true, data: { url }, message: "Platform logo updated." };
+  return { ok: true, data: { url }, message: type === "management" ? "Management logo updated." : "Institute logo updated." };
 }

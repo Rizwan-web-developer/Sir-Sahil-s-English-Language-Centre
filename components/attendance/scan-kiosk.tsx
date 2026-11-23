@@ -29,11 +29,7 @@ type ScanResult = {
 };
 
 function normalizeCode(input: string) {
-  const raw = input.trim().toUpperCase();
-  if (!raw) return "";
-  if (raw.startsWith("SELC-")) return raw;
-  const digits = raw.replace(/\D/g, "");
-  return digits ? `SELC-${digits.padStart(4, "0")}` : raw;
+  return input.trim();
 }
 
 export function ScanKiosk({ today, schedules, enrollments, marked }: Props) {
@@ -86,7 +82,7 @@ export function ScanKiosk({ today, schedules, enrollments, marked }: Props) {
     if (!q) return [];
     return batchEnrollments.filter((e) => {
       const st = e.student as Row | null;
-      const hay = `${String(st?.full_name ?? "")} ${String(st?.phone ?? "")} ${String(st?.student_code ?? "")}`.toLowerCase();
+      const hay = `${String(st?.full_name ?? "")} ${String(st?.phone ?? "")} ${String(st?.student_code ?? "")} ${String(st?.student_number ?? "")}`.toLowerCase();
       return hay.includes(q);
     }).slice(0, 8);
   }, [search, batchEnrollments]);
@@ -111,10 +107,10 @@ export function ScanKiosk({ today, schedules, enrollments, marked }: Props) {
         }
         const d = res.data;
         if (d.alreadyMarked) {
-          setResult({ tone: "warning", title: "Already marked", detail: `${d.student.full_name} (${d.student.student_code}) is already ${d.status}.`, photo: d.student.photo_url });
+          setResult({ tone: "warning", title: "Already marked", detail: `${d.student.full_name} (ID ${d.student.student_number}) is already ${d.status}.`, photo: d.student.photo_url });
         } else {
           setLocalMarked((prev) => [...prev, { student_id: d.student.id, batch_id: batchId, session_type: effectiveSessionType, date: today, status: d.status }]);
-          setResult({ tone: "success", title: d.status === "late" ? "LATE" : "PRESENT", detail: `${d.student.full_name} (${d.student.student_code})`, photo: d.student.photo_url, feePending: d.feePending });
+          setResult({ tone: "success", title: d.status === "late" ? "LATE" : "PRESENT", detail: `${d.student.full_name} (ID ${d.student.student_number})`, photo: d.student.photo_url, feePending: d.feePending });
         }
       } catch {
         setOfflineQueue((prev) => [...prev, { code, at: new Date().toISOString() }]);
@@ -181,7 +177,7 @@ export function ScanKiosk({ today, schedules, enrollments, marked }: Props) {
           <CardHeader><CardTitle>Scan / mark attendance</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <form onSubmit={onScanSubmit} className="flex gap-2">
-              <Input ref={inputRef} value={scanValue} onChange={(e) => setScanValue(e.target.value)} placeholder="Scan barcode or type SELC-0001..." className="h-12 text-lg" autoFocus />
+              <Input ref={inputRef} value={scanValue} onChange={(e) => setScanValue(e.target.value)} placeholder="Scan QR / barcode or type student ID (3306)..." className="h-12 text-lg" autoFocus />
               <Button type="submit" size="lg" disabled={isPending}>Mark</Button>
             </form>
 
@@ -204,7 +200,7 @@ export function ScanKiosk({ today, schedules, enrollments, marked }: Props) {
                     const already = markedIds.has(sid);
                     return (
                       <button key={String(e.id)} type="button" className="w-full p-3 text-left text-sm hover:bg-muted/40 flex items-center justify-between" onClick={() => !already && void mark("student_id", sid, "search")} disabled={already}>
-                        <span><span className="font-medium">{String(st?.full_name)}</span> <span className="text-muted-foreground">({String(st?.student_code)})</span></span>
+                        <span><span className="font-medium">{String(st?.full_name)}</span> <span className="text-muted-foreground">(ID {String(st?.student_number ?? st?.student_code)})</span></span>
                         {already ? <Badge variant="outline">Marked</Badge> : <Badge>Mark present</Badge>}
                       </button>
                     );
@@ -243,7 +239,7 @@ export function ScanKiosk({ today, schedules, enrollments, marked }: Props) {
                   <div key={String(e.id)} className="flex items-center justify-between p-2 text-sm">
                     <div>
                       <div className="font-medium">{String(st?.full_name ?? "—")}</div>
-                      <div className="text-[11px] text-muted-foreground">{String(st?.student_code ?? "")}</div>
+                      <div className="text-[11px] text-muted-foreground">{st?.student_number ? `ID ${String(st.student_number)} · ` : ""}{String(st?.student_code ?? "")}</div>
                     </div>
                     {markRow ? <Badge variant="outline" className="capitalize">{String(markRow.status)}</Badge> : <span className="text-xs text-muted-foreground">Pending</span>}
                   </div>

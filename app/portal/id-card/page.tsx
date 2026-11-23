@@ -26,6 +26,7 @@ export default async function PortalIdCardPage() {
           student={{
             full_name: student.full_name,
             student_code: student.student_code,
+            student_number: student.student_number,
             photo_url: student.photo_url,
             batch_name: batch?.name ?? "—",
             timing: batch?.start_time ? String(batch.start_time).slice(0, 5) : "—",

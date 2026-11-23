@@ -14,7 +14,6 @@ import {
   Megaphone,
   Receipt,
   ScanLine,
-  ScrollText,
   Settings,
   Trophy,
   UserRound,
@@ -32,6 +31,8 @@ export interface NavItem {
   icon: LucideIcon;
   /** Only highlight on an exact match (used for dashboards). */
   exact?: boolean;
+  /** Open an in-app popup instead of navigating (e.g. attendance). */
+  dialog?: "attendance";
 }
 
 export interface NavGroup {
@@ -69,19 +70,14 @@ export function getStaffNav(_role: UserRole, area: StaffArea): NavGroup[] {
         { label: "Dashboard", href: "/admin", icon: LayoutDashboard, exact: true },
         { label: t.nav.students, href: "/admin/students", icon: Users },
         { label: t.nav.batches, href: "/admin/batches", icon: Layers },
-        { label: t.nav.attendance, href: "/admin/attendance", icon: ScanLine },
+        { label: t.nav.attendance, href: "/admin/attendance", icon: ScanLine, dialog: "attendance" },
         { label: t.nav.fees, href: "/admin/fees", icon: Wallet },
         { label: "Announcements", href: "/admin/announcements", icon: Megaphone },
         { label: t.nav.reports, href: "/admin/reports", icon: ChartColumn },
       ],
     },
     {
-      label: t.nav.systemGroup,
-      items: [
-        { label: t.nav.settings, href: "/admin/settings", icon: Settings },
-        { label: "Audit log", href: "/admin/audit-log", icon: ScrollText },
-        { label: t.nav.account, href: "/admin/account", icon: UserRound },
-      ],
+      items: [{ label: t.nav.settings, href: "/admin/settings", icon: Settings }],
     },
   ];
 }

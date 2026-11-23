@@ -32,7 +32,7 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
       <PageHeader
         eyebrow="Student profile"
         title={student.full_name}
-        description={`${student.student_code} · ${student.phone}`}
+        description={`ID ${student.student_number} · ${student.student_code} · ${student.phone}`}
         actions={
           <div className="flex flex-wrap gap-2">
             <Button nativeButton={false} variant="outline" render={<Link href="/admin/students" />}><ArrowLeftIcon className="size-4" />Back</Button>

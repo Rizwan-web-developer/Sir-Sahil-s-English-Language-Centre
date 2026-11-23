@@ -48,9 +48,14 @@ export async function getStudentsList(
 
   if (q) {
     const like = `%${q}%`;
-    query = query.or(
-      `full_name.ilike.${like},phone.ilike.${like},student_code.ilike.${like},father_name.ilike.${like}`,
-    );
+    const filters = [
+      `full_name.ilike.${like}`,
+      `phone.ilike.${like}`,
+      `student_code.ilike.${like}`,
+      `father_name.ilike.${like}`,
+    ];
+    if (/^\d+$/.test(q)) filters.push(`student_number.eq.${q}`);
+    query = query.or(filters.join(","));
   }
   if (filters.status && filters.status !== "all") {
     query = query.eq("status", filters.status);

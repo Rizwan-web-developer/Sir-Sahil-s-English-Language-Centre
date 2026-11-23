@@ -21,7 +21,7 @@ export async function getAttendanceScanData() {
 
   const batchIds = Array.from(new Set(rows.map((r) => String(r.batch_id))));
   const { data: students } = batchIds.length
-    ? await supabase.from("batch_students").select("batch_id, student_id, student:students(id, full_name, student_code, phone, photo_url, status)").eq("active", true).in("batch_id", batchIds)
+    ? await supabase.from("batch_students").select("batch_id, student_id, student:students(id, full_name, student_code, student_number, phone, photo_url, status)").eq("active", true).in("batch_id", batchIds)
     : { data: [] };
 
   const { data: marked } = batchIds.length

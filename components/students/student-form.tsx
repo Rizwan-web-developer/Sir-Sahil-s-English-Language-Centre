@@ -9,6 +9,7 @@ import { toast } from "sonner";
 
 import { createStudentAction, updateStudentAction } from "@/lib/actions/students";
 import { studentFormSchema, type StudentFormInput, type StudentFormValues } from "@/lib/validation/students";
+import { StudentQr } from "@/components/students/student-qr";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,7 +30,7 @@ type Props = {
 export function StudentForm({ batches, initial, mode = "create" }: Props) {
   const [isPending, startTransition] = useTransition();
   const [serverError, setServerError] = useState<string | null>(null);
-  const [created, setCreated] = useState<{ studentId: string; studentCode: string; tempPassword: string } | null>(null);
+  const [created, setCreated] = useState<{ studentId: string; studentCode: string; studentNumber: number; tempPassword: string } | null>(null);
 
   const form = useForm<StudentFormInput, unknown, StudentFormValues>({
     resolver: zodResolver(studentFormSchema),
@@ -86,7 +87,7 @@ export function StudentForm({ batches, initial, mode = "create" }: Props) {
       }
 
       if (mode === "create" && "studentCode" in result.data) {
-        setCreated(result.data as { studentId: string; studentCode: string; tempPassword: string });
+        setCreated(result.data as { studentId: string; studentCode: string; studentNumber: number; tempPassword: string });
         toast.success("Student created");
       } else {
         toast.success(result.message ?? "Student updated");
@@ -105,9 +106,13 @@ export function StudentForm({ batches, initial, mode = "create" }: Props) {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-lg border bg-muted/30 p-3">
-              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Student code</p>
-              <p className="font-mono text-lg font-semibold">{created.studentCode}</p>
+            <div className="flex items-center gap-4 rounded-lg border bg-muted/30 p-3">
+              <StudentQr value={created.studentNumber} size={72} />
+              <div>
+                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Student ID (QR)</p>
+                <p className="font-mono text-2xl font-semibold">{created.studentNumber}</p>
+                <p className="text-[11px] text-muted-foreground">{created.studentCode}</p>
+              </div>
             </div>
             <div className="rounded-lg border bg-muted/30 p-3">
               <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Temporary password</p>
