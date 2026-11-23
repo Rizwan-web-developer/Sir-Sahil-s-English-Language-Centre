@@ -25,7 +25,7 @@ import type { SessionType } from "@/types/domain";
 
 export const metadata: Metadata = { title: "Teacher Dashboard" };
 
-const sessionTypes: SessionType[] = ["conversation", "grammar"];
+const sessionTypes: SessionType[] = ["grammar"];
 
 export default async function OwnerOverviewPage() {
   const { profile } = await requireOwner();

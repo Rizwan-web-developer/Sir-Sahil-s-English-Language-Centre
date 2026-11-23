@@ -2,7 +2,7 @@ import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
 
-export async function getCurriculumTree(sessionType?: "conversation" | "grammar") {
+export async function getCurriculumTree(sessionType?: "grammar") {
   const supabase = await createClient();
   let q = supabase
     .from("levels")
@@ -14,10 +14,10 @@ export async function getCurriculumTree(sessionType?: "conversation" | "grammar"
   return (data ?? []) as Array<Record<string, unknown>>;
 }
 
-export async function getTeachingData(batchId: string, sessionType: "conversation" | "grammar") {
+export async function getTeachingData(batchId: string, sessionType: "grammar") {
   const supabase = await createClient();
   const [batchRes, levelsRes, progressRes, studentsRes, assignmentRes] = await Promise.all([
-    supabase.from("batches").select("id, name, class_type, start_time, current_conversation_level_id, current_grammar_level_id").eq("id", batchId).maybeSingle(),
+    supabase.from("batches").select("id, name, class_type, start_time, current_grammar_level_id").eq("id", batchId).maybeSingle(),
     supabase.from("levels").select("id, name, sort_order, modules(id, name, sort_order, topics(id, name, sort_order, topic_assignments(id, title, max_marks)))").eq("session_type", sessionType).order("sort_order"),
     supabase.from("batch_progress").select("id, topic_id, completed_on, note, skipped, skip_reason").eq("batch_id", batchId).eq("session_type", sessionType),
     supabase.from("batch_students").select("student:students(id, full_name, student_code, status)").eq("batch_id", batchId).eq("active", true),

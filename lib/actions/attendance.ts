@@ -280,7 +280,7 @@ export async function quickAttendanceAction(args: {
   }
 
   let placement = args.batch_id ? enrollments.find((e) => e.batch_id === args.batch_id) ?? null : null;
-  let sessionType: SessionType = args.session_type ?? "conversation";
+  let sessionType: SessionType = args.session_type ?? "grammar";
 
   if (!placement) {
     const weekday = isoDayOfWeek(date);
@@ -304,7 +304,7 @@ export async function quickAttendanceAction(args: {
       (chosen ? enrollments.find((e) => e.batch_id === String(chosen.batch_id)) : null) ??
       enrollments[0];
     if (!args.session_type) {
-      sessionType = (chosen?.session_type as SessionType | undefined) ?? "conversation";
+      sessionType = "grammar";
     }
   }
 

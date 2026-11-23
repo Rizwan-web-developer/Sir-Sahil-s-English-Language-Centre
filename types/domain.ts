@@ -10,7 +10,7 @@ export type UserRole = "owner" | "reception" | "student";
 export type StudentStatus = "active" | "frozen" | "left" | "completed";
 export type ClassType = "weekday" | "weekend";
 export type BatchStatus = "active" | "closed";
-export type SessionType = "conversation" | "grammar";
+export type SessionType = "grammar";
 export type AttendanceStatus = "present" | "absent" | "late" | "leave";
 export type MarkedVia =
   | "scanner"

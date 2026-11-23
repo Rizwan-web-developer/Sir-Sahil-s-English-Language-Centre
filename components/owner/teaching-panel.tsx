@@ -23,7 +23,7 @@ export function TeachingPanel({
 }: {
   batches: Row[];
   selectedBatchId: string;
-  selectedSession: "conversation" | "grammar";
+  selectedSession: "grammar";
   teaching: Row | null;
 }) {
   const router = useRouter();
@@ -86,12 +86,9 @@ export function TeachingPanel({
             <SelectContent>{batches.map((b) => <SelectItem key={String(b.id)} value={String(b.id)}>{String(b.name)}</SelectItem>)}</SelectContent>
           </Select>
         </div>
-        <div className="w-full md:w-56 space-y-2">
+        <div className="w-full md:w-44 space-y-2">
           <Label>Session</Label>
-          <Select value={selectedSession} onValueChange={(v) => go(selectedBatchId, (v as string) ?? "conversation")}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent><SelectItem value="conversation">Conversation</SelectItem><SelectItem value="grammar">Grammar</SelectItem></SelectContent>
-          </Select>
+          <Input value="Grammar" readOnly className="bg-muted/40" />
         </div>
         <div className="w-full md:w-44 space-y-2">
           <Label>Date</Label>

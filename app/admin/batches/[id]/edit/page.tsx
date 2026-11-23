@@ -18,10 +18,6 @@ export default async function EditBatchPage({ params }: { params: Promise<{ id: 
   const batch = detail.batch as AnyRow;
   const schedule = detail.schedule as AnyRow[];
   const weekdays = Array.from(new Set(schedule.map((s) => Number(s.day_of_week)))).sort((a, b) => a - b);
-  const firstDay = schedule
-    .filter((s) => Number(s.day_of_week) === weekdays[0])
-    .sort((a, b) => String(a.start_time).localeCompare(String(b.start_time)));
-  const session_order = firstDay[0]?.session_type === "grammar" ? "grammar_then_conversation" : "conversation_then_grammar";
 
   return (
     <div className="space-y-6">
@@ -37,11 +33,10 @@ export default async function EditBatchPage({ params }: { params: Promise<{ id: 
           capacity: Number(batch.capacity),
           status: String(batch.status) as "active" | "closed",
           notes: String(batch.notes ?? ""),
-          session_order,
           weekdays: weekdays.length ? weekdays : [1, 2, 3, 4, 5],
           schedule: schedule.map((s) => ({
             day_of_week: Number(s.day_of_week),
-            session_type: String(s.session_type) as "conversation" | "grammar",
+            session_type: "grammar" as const,
             start_time: String(s.start_time).slice(0, 5),
             end_time: String(s.end_time).slice(0, 5),
           })),

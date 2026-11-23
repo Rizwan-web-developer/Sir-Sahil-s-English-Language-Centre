@@ -35,7 +35,7 @@ export default async function PortalTimetablePage() {
       <PageHeader
         eyebrow={t.nav.portalGroup}
         title={t.nav.timetable}
-        description="Your weekly classes — one Conversation and one Grammar session each class day."
+        description="Your weekly Grammar classes."
       />
 
       {!timetable.batch || timetable.days.length === 0 ? (

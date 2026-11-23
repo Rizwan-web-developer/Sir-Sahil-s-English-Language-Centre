@@ -10,6 +10,7 @@ import { quickAttendanceAction } from "@/lib/actions/attendance";
 import {
   getScannerModeServerSnapshot,
   getScannerModeSnapshot,
+  readScannerMode,
   subscribeScannerMode,
   writeScannerMode,
 } from "@/lib/scanner-mode";
@@ -40,7 +41,14 @@ export function AttendanceCenter({ area }: { area: "admin" | "owner" }) {
 
   useEffect(() => {
     if (area !== "admin") return;
-    const onOpen = () => setOpen(true);
+    const onOpen = () => {
+      // When a hardware scanner is active, scans are marked instantly (no popup).
+      if (readScannerMode()) {
+        toast.info("Scanner mode is on — scan a QR to mark attendance instantly.");
+        return;
+      }
+      setOpen(true);
+    };
     window.addEventListener(OPEN_EVENT, onOpen);
     return () => window.removeEventListener(OPEN_EVENT, onOpen);
   }, [area]);

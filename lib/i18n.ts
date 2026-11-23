@@ -94,7 +94,7 @@ const en = {
     studentNote: "Student login",
     features: [
       "Admissions and student records in one place",
-      "Flexible batch timetables, Conversation and Grammar",
+      "Flexible batch timetables and Grammar classes",
       "Fee recovery, barcode attendance and progress",
     ],
     rights: "All rights reserved.",
@@ -129,7 +129,6 @@ const en = {
     portal: "Student portal",
   },
   sessions: {
-    conversation: "Conversation",
     grammar: "Grammar",
     both: "Both sessions",
   },
@@ -310,7 +309,7 @@ export function getDictionary(locale: Locale = defaultLocale): Dictionary {
 /** Default dictionary — safe to use in components until a locale switcher exists. */
 export const t = getDictionary();
 
-export function sessionLabel(type: "conversation" | "grammar"): string {
+export function sessionLabel(type: "grammar"): string {
   return t.sessions[type];
 }
 

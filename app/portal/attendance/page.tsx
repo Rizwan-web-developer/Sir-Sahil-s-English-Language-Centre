@@ -95,20 +95,14 @@ export default async function PortalAttendancePage({
     grouped.set(record.date, list);
   }
 
-  const split = (type: "conversation" | "grammar") => {
-    const rows = attendance.records.filter((r) => r.session_type === type);
-    const present = rows.filter((r) => r.status === "present" || r.status === "late").length;
-    return { present, total: rows.length, rate: rows.length ? Math.round((present / rows.length) * 100) : null };
-  };
-  const conv = split("conversation");
-  const gram = split("grammar");
+  // Single grammar session only.
 
   return (
     <div className="space-y-5">
       <PageHeader
         eyebrow={t.nav.portalGroup}
         title={t.nav.attendance}
-        description="Every class day, both sessions — marked at reception."
+        description="Every class day — marked at reception."
       />
 
       <div className="grid grid-cols-2 gap-3">
@@ -131,10 +125,6 @@ export default async function PortalAttendancePage({
             </div>
           </CardContent>
         </Card>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <Card className="gap-1 py-4"><CardContent className="px-4"><p className="text-[11px] uppercase tracking-wide text-muted-foreground">Conversation</p><p className="font-heading text-xl font-semibold">{conv.rate === null ? "—" : `${conv.rate}%`}</p><p className="text-[11px] text-muted-foreground">{conv.present}/{conv.total} sessions</p></CardContent></Card>
-        <Card className="gap-1 py-4"><CardContent className="px-4"><p className="text-[11px] uppercase tracking-wide text-muted-foreground">Grammar</p><p className="font-heading text-xl font-semibold">{gram.rate === null ? "—" : `${gram.rate}%`}</p><p className="text-[11px] text-muted-foreground">{gram.present}/{gram.total} sessions</p></CardContent></Card>
       </div>
 
       <Card>

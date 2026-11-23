@@ -13,7 +13,7 @@ export default async function SettingsPage() {
   const initial: Record<string, string> = {};
   for (const [k, v] of Object.entries(settings)) initial[k] = typeof v === "string" ? v : String(v ?? "");
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader eyebrow="Management" title="Settings" description="Management and institute name, logo, phone, and address." />
       <SettingsForm initial={initial} />
     </div>

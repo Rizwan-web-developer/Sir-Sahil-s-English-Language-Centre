@@ -175,9 +175,6 @@ export default async function PortalProgressPage() {
   const { profile } = await requireStudent();
   const progress = await getPortalProgress(profile.id);
 
-  const conversation = progress.levels.filter(
-    (level) => level.session_type === "conversation",
-  );
   const grammar = progress.levels.filter(
     (level) => level.session_type === "grammar",
   );
@@ -210,7 +207,6 @@ export default async function PortalProgressPage() {
             </CardContent>
           </Card>
 
-          <SessionProgress type="conversation" levels={conversation} />
           <SessionProgress type="grammar" levels={grammar} />
         </>
       )}

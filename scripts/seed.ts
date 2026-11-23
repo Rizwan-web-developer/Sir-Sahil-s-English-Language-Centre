@@ -70,10 +70,9 @@ const BATCHES = [
     class_type: "weekday" as const,
     start_time: "14:00",
     capacity: 20,
-    // 2 PM batch: Conversation 2-3, Grammar 3-4
+    // Grammar only
     schedule: [
-      { session_type: "conversation" as const, start_time: "14:00", end_time: "15:00" },
-      { session_type: "grammar" as const, start_time: "15:00", end_time: "16:00" },
+      { session_type: "grammar" as const, start_time: "14:00", end_time: "15:00" },
     ],
   },
   {
@@ -81,10 +80,9 @@ const BATCHES = [
     class_type: "weekday" as const,
     start_time: "15:00",
     capacity: 20,
-    // 3 PM batch: Grammar 3-4, Conversation 4-5
+    // Grammar only
     schedule: [
       { session_type: "grammar" as const, start_time: "15:00", end_time: "16:00" },
-      { session_type: "conversation" as const, start_time: "16:00", end_time: "17:00" },
     ],
   },
   {
@@ -92,19 +90,18 @@ const BATCHES = [
     class_type: "weekday" as const,
     start_time: "16:00",
     capacity: 20,
-    // 4 PM batch: Conversation 4-5, Grammar 5-6
+    // Grammar only
     schedule: [
-      { session_type: "conversation" as const, start_time: "16:00", end_time: "17:00" },
-      { session_type: "grammar" as const, start_time: "17:00", end_time: "18:00" },
+      { session_type: "grammar" as const, start_time: "16:00", end_time: "17:00" },
     ],
   },
 ];
 
 const LEVELS = ["Beginner", "Pre-Intermediate", "Intermediate", "Advanced"] as const;
-const SESSION_TYPES = ["conversation", "grammar"] as const;
+const SESSION_TYPES = ["grammar"] as const;
 
 function moduleTopics(level: string, session: string, moduleIndex: number) {
-  const base = `${level} ${session === "conversation" ? "Conversation" : "Grammar"} M${moduleIndex + 1}`;
+  const base = `${level} Grammar M${moduleIndex + 1}`;
   return Array.from({ length: 5 }, (_, i) => ({
     name: `${base} Topic ${i + 1}`,
     description: `Practice activity ${i + 1} for ${base.toLowerCase()}.`,

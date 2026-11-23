@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
@@ -13,8 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 type Row = Record<string, unknown>;
 
-export function CurriculumBuilder({ session, tree }: { session: "conversation" | "grammar"; tree: Row[] }) {
-  const router = useRouter();
+export function CurriculumBuilder({ session, tree }: { session: "grammar"; tree: Row[] }) {
   const [isPending, startTransition] = useTransition();
   const [name, setName] = useState("");
   const [kind, setKind] = useState<"level" | "module" | "topic" | "assignment">("level");
@@ -36,10 +34,7 @@ export function CurriculumBuilder({ session, tree }: { session: "conversation" |
     <div className="space-y-4">
       <Card><CardContent className="pt-6 flex flex-wrap gap-2 items-end">
         <div className="space-y-1"><p className="text-xs text-muted-foreground">Track</p>
-          <Select value={session} onValueChange={(v) => router.push(`/owner/curriculum?session=${v}`)}>
-            <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
-            <SelectContent><SelectItem value="conversation">Conversation</SelectItem><SelectItem value="grammar">Grammar</SelectItem></SelectContent>
-          </Select>
+          <Input value="Grammar" readOnly className="w-44 bg-muted/40" />
         </div>
         <div className="space-y-1"><p className="text-xs text-muted-foreground">Add</p>
           <Select value={kind} onValueChange={(v) => setKind((v as typeof kind) ?? "level")}>

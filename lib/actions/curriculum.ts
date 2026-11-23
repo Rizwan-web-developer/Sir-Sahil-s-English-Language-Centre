@@ -9,7 +9,7 @@ type Result<T = undefined> = { ok: true; data: T; message?: string } | { ok: fal
 
 export async function markTopicCompletedAction(args: {
   batch_id: string;
-  session_type: "conversation" | "grammar";
+  session_type: "grammar";
   topic_id: string;
   completed_on: string;
   note?: string;
@@ -68,7 +68,7 @@ export async function undoTopicProgressAction(args: { batch_id: string; topic_id
 
 export async function skipTopicAction(args: {
   batch_id: string;
-  session_type: "conversation" | "grammar";
+  session_type: "grammar";
   topic_id: string;
   reason: string;
 }): Promise<Result> {
@@ -113,7 +113,7 @@ export async function assignAssignmentToBatchAction(args: {
 export async function createCurriculumItemAction(args: {
   kind: "level" | "module" | "topic" | "assignment";
   parentId?: string;
-  session_type: "conversation" | "grammar";
+  session_type: "grammar";
   name: string;
   description?: string;
   sort_order?: number;

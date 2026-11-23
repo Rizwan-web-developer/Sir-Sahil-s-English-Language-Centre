@@ -16,7 +16,7 @@ export default async function OwnerTeachingPage({
   await requireOwner();
   const sp = await searchParams;
   const batchId = sp.batch ?? "";
-  const sessionType = sp.session === "grammar" ? "grammar" : "conversation";
+  const sessionType = "grammar" as const;
   const supabase = await createClient();
   const { data: batches } = await supabase.from("batches").select("id, name, status, class_type").eq("status", "active").order("start_time");
   const teaching = batchId ? await getTeachingData(batchId, sessionType) : null;

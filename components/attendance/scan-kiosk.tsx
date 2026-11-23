@@ -34,7 +34,7 @@ function normalizeCode(input: string) {
 
 export function ScanKiosk({ today, schedules, enrollments, marked }: Props) {
   const [batchId, setBatchId] = useState<string>(String((schedules[0]?.batch_id as string) ?? ""));
-  const [sessionType, setSessionType] = useState<"conversation" | "grammar">((schedules[0]?.session_type as "conversation" | "grammar") ?? "conversation");
+  const sessionType = "grammar" as const;
   const [scanValue, setScanValue] = useState("");
   const [search, setSearch] = useState("");
   const [result, setResult] = useState<ScanResult | null>(null);
@@ -56,22 +56,14 @@ export function ScanKiosk({ today, schedules, enrollments, marked }: Props) {
     return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
   }, [schedules]);
 
-  const sessionOptions = useMemo(() => {
-    return schedules
-      .filter((s) => String(s.batch_id) === batchId)
-      .map((s) => String(s.session_type) as "conversation" | "grammar");
-  }, [schedules, batchId]);
-
-  const effectiveSessionType = sessionOptions.includes(sessionType) ? sessionType : (sessionOptions[0] ?? "conversation");
-
-  useEffect(() => { inputRef.current?.focus(); }, [batchId, effectiveSessionType, result]);
+  useEffect(() => { inputRef.current?.focus(); }, [batchId, sessionType, result]);
 
   useEffect(() => {
     localStorage.setItem("selc_attendance_queue", JSON.stringify(offlineQueue));
   }, [offlineQueue]);
 
   const batchEnrollments = useMemo(() => enrollments.filter((e) => String(e.batch_id) === batchId), [enrollments, batchId]);
-  const markedForSession = useMemo(() => localMarked.filter((m) => String(m.batch_id) === batchId && String(m.session_type) === effectiveSessionType && String(m.date) === today), [localMarked, batchId, effectiveSessionType, today]);
+  const markedForSession = useMemo(() => localMarked.filter((m) => String(m.batch_id) === batchId && String(m.session_type) === sessionType && String(m.date) === today), [localMarked, batchId, sessionType, today]);
   const markedIds = new Set(markedForSession.map((m) => String(m.student_id)));
   const presentCount = markedForSession.filter((m) => m.status === "present").length;
   const lateCount = markedForSession.filter((m) => m.status === "late").length;
@@ -96,7 +88,7 @@ export function ScanKiosk({ today, schedules, enrollments, marked }: Props) {
           codeOrStudentId: code,
           by,
           batch_id: batchId,
-          session_type: effectiveSessionType,
+          session_type: sessionType,
           date: today,
           status,
           marked_via: via,
@@ -109,7 +101,7 @@ export function ScanKiosk({ today, schedules, enrollments, marked }: Props) {
         if (d.alreadyMarked) {
           setResult({ tone: "warning", title: "Already marked", detail: `${d.student.full_name} (ID ${d.student.student_number}) is already ${d.status}.`, photo: d.student.photo_url });
         } else {
-          setLocalMarked((prev) => [...prev, { student_id: d.student.id, batch_id: batchId, session_type: effectiveSessionType, date: today, status: d.status }]);
+          setLocalMarked((prev) => [...prev, { student_id: d.student.id, batch_id: batchId, session_type: sessionType, date: today, status: d.status }]);
           setResult({ tone: "success", title: d.status === "late" ? "LATE" : "PRESENT", detail: `${d.student.full_name} (ID ${d.student.student_number})`, photo: d.student.photo_url, feePending: d.feePending });
         }
       } catch {
@@ -130,7 +122,7 @@ export function ScanKiosk({ today, schedules, enrollments, marked }: Props) {
   async function onFinalize() {
     if (!batchId) return;
     startTransition(async () => {
-      const res = await finalizeAttendanceAction({ batch_id: batchId, session_type: effectiveSessionType, date: today });
+      const res = await finalizeAttendanceAction({ batch_id: batchId, session_type: sessionType, date: today });
       if (!res.ok) toast.error(res.error);
       else toast.success(res.message ?? "Finalized");
     });
@@ -162,12 +154,7 @@ export function ScanKiosk({ today, schedules, enrollments, marked }: Props) {
           <SelectTrigger className="w-56"><SelectValue placeholder="Select batch" /></SelectTrigger>
           <SelectContent>{batchOptions.map((b) => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}</SelectContent>
         </Select>
-        <Select value={effectiveSessionType} onValueChange={(v) => setSessionType((v as "conversation" | "grammar") ?? "conversation")}>
-          <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {(sessionOptions.length ? sessionOptions : ["conversation", "grammar"]).map((s) => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        <Badge variant="outline" className="capitalize">{sessionType}</Badge>
         <Badge variant="outline">{today}</Badge>
         {offlineQueue.length > 0 && <Badge variant="destructive"><WifiOffIcon className="size-3 mr-1" />{offlineQueue.length} queued</Badge>}
       </div>

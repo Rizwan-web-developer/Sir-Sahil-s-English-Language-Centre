@@ -2,11 +2,7 @@ import { z } from "zod";
 
 export const classTypeSchema = z.enum(["weekday", "weekend"]);
 export const batchStatusSchema = z.enum(["active", "closed"]);
-export const sessionTypeSchema = z.enum(["conversation", "grammar"]);
-export const sessionOrderSchema = z.enum([
-  "conversation_then_grammar",
-  "grammar_then_conversation",
-]);
+export const sessionTypeSchema = z.enum(["grammar"]);
 
 export const batchScheduleInputSchema = z.object({
   day_of_week: z.coerce.number().int().min(1).max(7),
@@ -24,7 +20,6 @@ export const batchFormSchema = z
     capacity: z.coerce.number().int().min(1, "Capacity must be at least 1.").max(200),
     status: batchStatusSchema.default("active"),
     notes: z.string().trim().max(1000).optional().or(z.literal("")),
-    session_order: sessionOrderSchema.default("conversation_then_grammar"),
     weekdays: z.array(z.coerce.number().int().min(1).max(7)).default([1, 2, 3, 4, 5]),
     schedule: z.array(batchScheduleInputSchema).min(1, "Add at least one schedule row."),
   })

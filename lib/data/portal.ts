@@ -445,7 +445,7 @@ export async function getPortalAssignments(
       id: String(record.id),
       title: String(assignment?.title ?? "Assignment"),
       instructions: (assignment?.instructions as string | null) ?? null,
-      session_type: (assignment?.session_type as SessionType) ?? "conversation",
+      session_type: (assignment?.session_type as SessionType) ?? "grammar",
       topic: (topic?.name as string | undefined) ?? null,
       level: (level?.name as string | undefined) ?? null,
       status: record.status as SubmissionStatus,

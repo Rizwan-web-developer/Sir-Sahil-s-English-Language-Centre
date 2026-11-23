@@ -22,7 +22,7 @@ export default async function TimetablePage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader eyebrow="Timetable" title="Weekly timetable" description="All batches, 2:00 PM to 10:00 PM. Conversation and Grammar are colour-coded." />
+      <PageHeader eyebrow="Timetable" title="Weekly timetable" description="All batches, 2:00 PM to 10:00 PM." />
       <Card><CardContent className="overflow-x-auto pt-6">
         <div className="min-w-[900px]">
           <div className="grid grid-cols-[90px_repeat(7,minmax(0,1fr))] gap-1 text-xs">
@@ -43,7 +43,7 @@ export default async function TimetablePage() {
                       {matches.map((m) => {
                         const batch = m.batch as Record<string, unknown> | null;
                         return (
-                          <div key={String(m.id)} className={`mb-1 rounded-md px-1.5 py-1 text-[10px] leading-tight ${m.session_type === "conversation" ? "bg-primary/10 text-primary" : "bg-gold/15 text-gold-foreground dark:text-gold"}`}>
+                          <div key={String(m.id)} className="mb-1 rounded-md bg-gold/15 px-1.5 py-1 text-[10px] leading-tight text-gold-foreground dark:text-gold">
                             <div className="font-medium truncate">{String(batch?.name ?? "")}</div>
                             <div className="capitalize">{String(m.session_type)}</div>
                           </div>
