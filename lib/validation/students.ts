@@ -11,7 +11,7 @@ export const studentFormSchema = z.object({
   full_name: z.string().trim().min(2, "Student name is required.").max(120),
   father_name: z.string().trim().max(120).optional().or(z.literal("")),
   date_of_birth: z.string().optional().or(z.literal("")),
-  cnic_or_bform: z.string().trim().max(30).optional().or(z.literal("")),
+  cnic_or_bform: z.string().trim().min(5, "CNIC / B-Form is required.").max(30),
   address: z.string().trim().max(500).optional().or(z.literal("")),
   photo_url: z.string().trim().max(500).optional().or(z.literal("")),
   phone: z
@@ -31,6 +31,8 @@ export const studentFormSchema = z.object({
   discount_reason: z.string().trim().max(300).optional().or(z.literal("")),
   notes: z.string().trim().max(2000).optional().or(z.literal("")),
   status: studentStatusSchema.optional().default("active"),
+  /** Login password set at creation time. Required on create, optional on edit. */
+  password: z.string().trim().max(100).optional().or(z.literal("")),
 });
 
 export type StudentFormInput = z.input<typeof studentFormSchema>;

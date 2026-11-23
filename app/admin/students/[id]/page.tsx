@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { requireStaff } from "@/lib/auth/session";
 import { getStudentDetail } from "@/lib/data/students";
-import { formatDate, formatPKR } from "@/lib/format";
+import { currentMonthStart, formatDate, formatMonth, formatPKR } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Student Profile" };
 type AnyRow = Record<string, unknown>;
@@ -27,12 +27,27 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
   const attendanceRows = attendance as AnyRow[];
   const feeRows = feeRecords as AnyRow[];
 
+  const admission = String(student.admission_date ?? "").slice(0, 10);
+  const start = new Date((admission || new Date().toISOString().slice(0, 10)).slice(0, 7) + "-01T00:00:00Z");
+  const currentMonth = currentMonthStart();
+  const sixMonths = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + i, 1));
+    const period = d.toISOString().slice(0, 10);
+    const row = feeRows.find((f) => String(f.period_month).slice(0, 10) === period);
+    const amountDue = row ? Number(row.amount_due ?? 0) - Number(row.discount ?? 0) : 0;
+    const amountPaid = row ? Number(row.amount_paid ?? 0) : 0;
+    const balance = Math.max(0, amountDue - amountPaid);
+    const status = row ? String(row.status ?? "pending") : "no_record";
+    const paid = status === "paid" || status === "waived" || (row ? balance <= 0 : false);
+    return { period, label: formatMonth(period), status, paid, isFuture: period > currentMonth, isCurrent: period === currentMonth, amountDue, amountPaid };
+  });
+
   return (
     <div className="space-y-6">
       <PageHeader
         eyebrow="Student profile"
         title={student.full_name}
-        description={`ID ${student.student_number} · ${student.student_code} · ${student.phone}`}
+        description={`Student ID ${student.student_number} · CNIC ${student.cnic_or_bform || "—"} · ${student.phone}`}
         actions={
           <div className="flex flex-wrap gap-2">
             <Button nativeButton={false} variant="outline" render={<Link href="/admin/students" />}><ArrowLeftIcon className="size-4" />Back</Button>
@@ -94,21 +109,34 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
         </TabsContent>
 
         <TabsContent value="fees">
-          <Card><CardHeader><CardTitle>Fee records</CardTitle></CardHeader><CardContent>
-            <Table><TableHeader><TableRow><TableHead>Month</TableHead><TableHead>Due</TableHead><TableHead>Paid</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
-              <TableBody>
-                {feeRows.length === 0 ? <TableRow><TableCell colSpan={4} className="text-muted-foreground">No fee records yet.</TableCell></TableRow> :
-                  feeRows.map((f) => (
-                    <TableRow key={String(f.id)}>
-                      <TableCell>{formatDate(String(f.period_month), { month: "long", year: "numeric" })}</TableCell>
-                      <TableCell>{formatPKR(Number(f.amount_due))}</TableCell>
-                      <TableCell>{formatPKR(Number(f.amount_paid))}</TableCell>
-                      <TableCell><Badge variant="outline" className="capitalize">{String(f.status)}</Badge></TableCell>
-                    </TableRow>
-                  ))}
-              </TableBody>
-            </Table>
-          </CardContent></Card>
+          <div className="space-y-4">
+            <Card><CardHeader><CardTitle>6-month fee overview</CardTitle></CardHeader><CardContent className="grid gap-2">
+              {sixMonths.map((m) => (
+                <div key={m.period} className={`flex items-center justify-between rounded-md border px-3 py-2 text-sm ${m.isFuture ? "opacity-45" : ""} ${m.paid ? "border-success/30 bg-success/5" : m.isCurrent ? "border-destructive/30 bg-destructive/5" : ""}`}>
+                  <span className="font-medium">{m.label}</span>
+                  <span className={`text-xs ${m.paid ? "text-success" : m.isCurrent ? "text-destructive" : m.isFuture ? "text-muted-foreground" : "text-gold-foreground dark:text-gold"}`}>
+                    {m.isFuture ? "Upcoming" : m.paid ? "Paid ✓" : "Unpaid"}
+                  </span>
+                </div>
+              ))}
+            </CardContent></Card>
+
+            <Card><CardHeader><CardTitle>Fee records</CardTitle></CardHeader><CardContent>
+              <Table><TableHeader><TableRow><TableHead>Month</TableHead><TableHead>Due</TableHead><TableHead>Paid</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
+                <TableBody>
+                  {feeRows.length === 0 ? <TableRow><TableCell colSpan={4} className="text-muted-foreground">No fee records yet.</TableCell></TableRow> :
+                    feeRows.map((f) => (
+                      <TableRow key={String(f.id)}>
+                        <TableCell>{formatDate(String(f.period_month), { month: "long", year: "numeric" })}</TableCell>
+                        <TableCell>{formatPKR(Number(f.amount_due))}</TableCell>
+                        <TableCell>{formatPKR(Number(f.amount_paid))}</TableCell>
+                        <TableCell><Badge variant="outline" className="capitalize">{String(f.status)}</Badge></TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
+            </CardContent></Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="attendance">

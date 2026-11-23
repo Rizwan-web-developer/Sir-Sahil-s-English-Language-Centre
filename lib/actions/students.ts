@@ -66,7 +66,7 @@ async function findDuplicateStudent(input: {
 
 export async function createStudentAction(
   raw: StudentFormInput,
-): Promise<ActionResult<{ studentId: string; studentCode: string; studentNumber: number; tempPassword: string }>> {
+): Promise<ActionResult<{ studentId: string; studentCode: string; studentNumber: number }>> {
   await requireStaff();
   const parsed = studentFormSchema.safeParse(raw);
   if (!parsed.success) {
@@ -87,15 +87,19 @@ export async function createStudentAction(
     };
   }
 
+  const password = (values.password ?? "").trim();
+  if (password.length < 6) {
+    return { ok: false, error: "Password is required (minimum 6 characters).", fieldErrors: { password: "Password is required (minimum 6 characters)." } };
+  }
+
   const admin = createAdminClient();
   const supabase = await createClient();
-  const tempPassword = makeTempPassword();
 
   // Create a placeholder auth user first; we'll rename email to <student_code>@selc.local after insert.
   const placeholderEmail = `pending-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@selc.local`;
   const { data: authData, error: authError } = await admin.auth.admin.createUser({
     email: placeholderEmail,
-    password: tempPassword,
+    password,
     email_confirm: true,
     app_metadata: { role: "student" },
     user_metadata: { full_name: values.full_name, phone: values.phone },
@@ -141,7 +145,7 @@ export async function createStudentAction(
 
   const finalEmail = `${String(student.student_code).toLowerCase()}@selc.local`;
   await admin.auth.admin.updateUserById(authData.user.id, { email: finalEmail, email_confirm: true });
-  await admin.from("profiles").update({ must_change_password: true }).eq("id", authData.user.id);
+  await admin.from("profiles").update({ must_change_password: false }).eq("id", authData.user.id);
 
   if (values.batch_ids?.length) {
     const rows = values.batch_ids.map((batchId) => ({
@@ -161,7 +165,6 @@ export async function createStudentAction(
       studentId: student.id,
       studentCode: student.student_code,
       studentNumber: Number(student.student_number),
-      tempPassword,
     },
     message: "Student created.",
   };

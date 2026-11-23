@@ -5,6 +5,7 @@ import { PlusIcon, UsersIcon } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { StudentFilters } from "@/components/students/student-filters";
+import { StudentRowActions } from "@/components/students/student-row-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -92,13 +93,12 @@ export default async function AdminStudentsPage({
                   <TableHeader>
                     <TableRow>
                       <TableHead>Student</TableHead>
-                      <TableHead>ID</TableHead>
-                      <TableHead>Code</TableHead>
+                      <TableHead>Student ID</TableHead>
                       <TableHead>Phone</TableHead>
                       <TableHead>Batch</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Fee</TableHead>
-                      <TableHead className="text-right">Attendance</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -111,7 +111,6 @@ export default async function AdminStudentsPage({
                           <div className="text-[11px] text-muted-foreground">{student.father_name || "—"}</div>
                         </TableCell>
                         <TableCell className="font-mono text-xs font-semibold">{student.student_number}</TableCell>
-                        <TableCell className="font-mono text-xs">{student.student_code}</TableCell>
                         <TableCell className="text-xs">{student.phone}</TableCell>
                         <TableCell className="text-xs">{student.batches.map((b) => b.name).join(", ") || "—"}</TableCell>
                         <TableCell>
@@ -122,8 +121,8 @@ export default async function AdminStudentsPage({
                             {student.feeStatus}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-right text-xs">
-                          {student.attendancePercent === null ? "—" : `${student.attendancePercent}%`}
+                        <TableCell className="text-right">
+                          <StudentRowActions id={student.id} name={student.full_name} />
                         </TableCell>
                       </TableRow>
                     ))}

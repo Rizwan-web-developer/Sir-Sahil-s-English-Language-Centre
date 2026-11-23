@@ -69,7 +69,7 @@ export function LoginForm() {
 
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" noValidate>
         <div className="space-y-1.5">
-          <Label htmlFor="identifier">{isAdmin ? "Email" : "Student Code / Phone"}</Label>
+          <Label htmlFor="identifier">{isAdmin ? "Email" : "CNIC / B-Form"}</Label>
           <div className="relative">
             {isAdmin ? (
               <MailIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -81,7 +81,7 @@ export function LoginForm() {
               autoComplete="username"
               autoCapitalize="none"
               spellCheck={false}
-              placeholder={isAdmin ? "owner@gmail.com" : "SELC-0001 or phone number"}
+              placeholder={isAdmin ? "owner@gmail.com" : "Enter CNIC / B-Form"}
               className="h-10 pl-9"
               {...form.register("identifier")}
             />
@@ -121,7 +121,7 @@ export function LoginForm() {
       </form>
 
       <p className="text-center text-[11px] leading-relaxed text-muted-foreground">
-        {isAdmin ? "Admin access only. Student accounts are created by admin." : "Use the student code or phone number given by the institute."}
+        {isAdmin ? "Admin access only. Student accounts are created by admin." : "Use your CNIC / B-Form and password given by the institute."}
       </p>
     </div>
   );

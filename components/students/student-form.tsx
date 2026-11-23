@@ -1,14 +1,16 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CheckCircle2Icon, CopyIcon, LoaderCircleIcon } from "lucide-react";
+import { CheckCircle2Icon, CopyIcon, CreditCardIcon, LoaderCircleIcon, UploadIcon } from "lucide-react";
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { createStudentAction, updateStudentAction } from "@/lib/actions/students";
 import { studentFormSchema, type StudentFormInput, type StudentFormValues } from "@/lib/validation/students";
+import { createClient } from "@/lib/supabase/client";
+import { StudentIdCard } from "@/components/students/id-card";
 import { StudentQr } from "@/components/students/student-qr";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -17,6 +19,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 
 type BatchOption = { id: string; name: string; status?: string; class_type?: string };
@@ -25,12 +28,18 @@ type Props = {
   batches: BatchOption[];
   initial?: Partial<StudentFormValues> & { id?: string };
   mode?: "create" | "edit";
+  instituteName?: string;
+  institutePhone?: string;
+  instituteAddress?: string;
 };
 
-export function StudentForm({ batches, initial, mode = "create" }: Props) {
+export function StudentForm({ batches, initial, mode = "create", instituteName, institutePhone, instituteAddress }: Props) {
   const [isPending, startTransition] = useTransition();
   const [serverError, setServerError] = useState<string | null>(null);
-  const [created, setCreated] = useState<{ studentId: string; studentCode: string; studentNumber: number; tempPassword: string } | null>(null);
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [cardOpen, setCardOpen] = useState(false);
+  const fileRef = useRef<HTMLInputElement | null>(null);
+  const [created, setCreated] = useState<{ studentId: string; studentCode: string; studentNumber: number; fullName: string } | null>(null);
 
   const form = useForm<StudentFormInput, unknown, StudentFormValues>({
     resolver: zodResolver(studentFormSchema),
@@ -54,18 +63,35 @@ export function StudentForm({ batches, initial, mode = "create" }: Props) {
       discount_reason: initial?.discount_reason ?? "",
       notes: initial?.notes ?? "",
       status: initial?.status ?? "active",
+      password: "",
     },
   });
 
   const sameAsPhone = form.watch("whatsapp_same_as_phone");
+  const photoUrl = form.watch("photo_url");
 
   function toggleBatch(batchId: string, checked: boolean) {
     const current = form.getValues("batch_ids") ?? [];
-    form.setValue(
-      "batch_ids",
-      checked ? [...current, batchId] : current.filter((id) => id !== batchId),
-      { shouldDirty: true },
-    );
+    form.setValue("batch_ids", checked ? [...current, batchId] : current.filter((id) => id !== batchId), { shouldDirty: true });
+  }
+
+  async function uploadPhoto(file: File | undefined) {
+    if (!file) return;
+    setPhotoUploading(true);
+    try {
+      const supabase = createClient();
+      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const path = `students/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const { error } = await supabase.storage.from("student-photos").upload(path, file, { upsert: true, contentType: file.type });
+      if (error) throw error;
+      const { data } = supabase.storage.from("student-photos").getPublicUrl(path);
+      form.setValue("photo_url", data.publicUrl, { shouldDirty: true, shouldValidate: true });
+      toast.success("Photo uploaded");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Photo upload failed");
+    } finally {
+      setPhotoUploading(false);
+    }
   }
 
   function onSubmit(values: StudentFormValues) {
@@ -86,8 +112,8 @@ export function StudentForm({ batches, initial, mode = "create" }: Props) {
         return;
       }
 
-      if (mode === "create" && "studentCode" in result.data) {
-        setCreated(result.data as { studentId: string; studentCode: string; studentNumber: number; tempPassword: string });
+      if (mode === "create" && "studentNumber" in result.data) {
+        setCreated({ ...result.data, fullName: values.full_name } as { studentId: string; studentCode: string; studentNumber: number; fullName: string });
         toast.success("Student created");
       } else {
         toast.success(result.message ?? "Student updated");
@@ -102,31 +128,47 @@ export function StudentForm({ batches, initial, mode = "create" }: Props) {
           <CardTitle className="flex items-center gap-2 text-success">
             <CheckCircle2Icon className="size-5" /> Student admitted
           </CardTitle>
-          <CardDescription>Share these credentials once. The temporary password is not shown again.</CardDescription>
+          <CardDescription>Student ID and QR are ready. Login is CNIC + password.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="flex items-center gap-4 rounded-lg border bg-muted/30 p-3">
-              <StudentQr value={created.studentNumber} size={72} />
-              <div>
-                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Student ID (QR)</p>
-                <p className="font-mono text-2xl font-semibold">{created.studentNumber}</p>
-                <p className="text-[11px] text-muted-foreground">{created.studentCode}</p>
-              </div>
-            </div>
-            <div className="rounded-lg border bg-muted/30 p-3">
-              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Temporary password</p>
-              <div className="flex items-center gap-2">
-                <p className="font-mono text-lg font-semibold">{created.tempPassword}</p>
-                <Button type="button" variant="ghost" size="icon-sm" onClick={() => navigator.clipboard.writeText(created.tempPassword)}>
-                  <CopyIcon className="size-4" />
-                </Button>
-              </div>
+          <div className="flex items-center gap-4 rounded-lg border bg-muted/30 p-4">
+            <StudentQr value={created.studentNumber} size={84} />
+            <div>
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Student ID</p>
+              <p className="font-mono text-3xl font-semibold">{created.studentNumber}</p>
+              <p className="text-sm text-muted-foreground">{created.fullName}</p>
             </div>
           </div>
+
           <div className="flex flex-wrap gap-2">
-            <Button nativeButton={false} render={<Link href={`/admin/students/${created.studentId}`} />}>Open profile</Button>
-            <Button type="button" variant="outline" onClick={() => window.print()}>Print ID / Receipt</Button>
+            <Sheet open={cardOpen} onOpenChange={setCardOpen}>
+              <SheetTrigger render={<Button type="button" />}>
+                <CreditCardIcon className="size-4" />Open ID Card
+              </SheetTrigger>
+              <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-xl">
+                <SheetHeader>
+                  <SheetTitle>Student ID Card</SheetTitle>
+                  <SheetDescription>Branded card with QR. Print and give to student.</SheetDescription>
+                </SheetHeader>
+                <div className="mt-4 space-y-4">
+                  <StudentIdCard
+                    student={{
+                      full_name: created.fullName,
+                      student_code: created.studentCode,
+                      student_number: created.studentNumber,
+                      photo_url: form.getValues("photo_url") || null,
+                      batch_name: null,
+                      timing: null,
+                    }}
+                    instituteName={instituteName}
+                    institutePhone={institutePhone}
+                    instituteAddress={instituteAddress}
+                  />
+                  <Button type="button" onClick={() => window.print()}>Print ID Card</Button>
+                </div>
+              </SheetContent>
+            </Sheet>
+            <Button nativeButton={false} variant="outline" render={<Link href={`/admin/students/${created.studentId}`} />}>Open details</Button>
             <Button type="button" variant="outline" onClick={() => { setCreated(null); form.reset(); }}>Add another</Button>
           </div>
         </CardContent>
@@ -146,14 +188,34 @@ export function StudentForm({ batches, initial, mode = "create" }: Props) {
           <div className="space-y-2"><Label htmlFor="full_name">Full name *</Label><Input id="full_name" {...form.register("full_name")} />{err("full_name") && <p className="text-xs text-destructive">{err("full_name")}</p>}</div>
           <div className="space-y-2"><Label htmlFor="father_name">Father name</Label><Input id="father_name" {...form.register("father_name")} /></div>
           <div className="space-y-2"><Label htmlFor="date_of_birth">Date of birth</Label><Input id="date_of_birth" type="date" {...form.register("date_of_birth")} /></div>
-          <div className="space-y-2"><Label htmlFor="cnic_or_bform">CNIC / B-Form</Label><Input id="cnic_or_bform" {...form.register("cnic_or_bform")} /></div>
+          <div className="space-y-2"><Label htmlFor="cnic_or_bform">CNIC / B-Form *</Label><Input id="cnic_or_bform" {...form.register("cnic_or_bform")} />{err("cnic_or_bform") && <p className="text-xs text-destructive">{err("cnic_or_bform")}</p>}</div>
           <div className="space-y-2 md:col-span-2"><Label htmlFor="address">Address</Label><Textarea id="address" {...form.register("address")} /></div>
-          <div className="space-y-2 md:col-span-2"><Label htmlFor="photo_url">Photo URL (optional)</Label><Input id="photo_url" placeholder="https://..." {...form.register("photo_url")} /></div>
+          <div className="space-y-2 md:col-span-2">
+            <Label>Photo</Label>
+            <div className="flex items-center gap-4">
+              <div className="size-20 overflow-hidden rounded-lg border bg-muted/30">
+                {photoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={photoUrl} alt="Student" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-xs text-muted-foreground">No photo</div>
+                )}
+              </div>
+              <div className="space-y-2">
+                <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={(e) => uploadPhoto(e.target.files?.[0])} />
+                <Button type="button" variant="outline" onClick={() => fileRef.current?.click()} disabled={photoUploading}>
+                  {photoUploading ? <LoaderCircleIcon className="size-4 animate-spin" /> : <UploadIcon className="size-4" />}
+                  Upload photo
+                </Button>
+                {photoUrl ? <Button type="button" variant="ghost" size="sm" onClick={() => form.setValue("photo_url", "", { shouldDirty: true })}>Remove</Button> : null}
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader><CardTitle>Contact</CardTitle></CardHeader>
+        <CardHeader><CardTitle>Contact & login</CardTitle></CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2"><Label htmlFor="phone">Phone *</Label><Input id="phone" {...form.register("phone")} />{err("phone") && <p className="text-xs text-destructive">{err("phone")}</p>}</div>
           <div className="space-y-2"><Label htmlFor="parent_phone">Parent phone</Label><Input id="parent_phone" {...form.register("parent_phone")} /></div>
@@ -165,6 +227,14 @@ export function StudentForm({ batches, initial, mode = "create" }: Props) {
               Same as phone
             </label>
           </div>
+          {mode === "create" && (
+            <div className="space-y-2">
+              <Label htmlFor="password">Password *</Label>
+              <Input id="password" type="text" {...form.register("password")} placeholder="Set student login password" />
+              {err("password") && <p className="text-xs text-destructive">{err("password")}</p>}
+              <p className="text-[11px] text-muted-foreground">Student login: CNIC/B-Form + this password.</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -215,7 +285,7 @@ export function StudentForm({ batches, initial, mode = "create" }: Props) {
       </Card>
 
       <div className="flex items-center gap-2">
-        <Button type="submit" disabled={isPending}>
+        <Button type="submit" disabled={isPending || photoUploading}>
           {isPending && <LoaderCircleIcon className="size-4 animate-spin" />}
           {mode === "edit" ? "Save changes" : "Create student"}
         </Button>
