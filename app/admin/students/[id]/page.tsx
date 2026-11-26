@@ -27,6 +27,14 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
   const attendanceRows = attendance as AnyRow[];
   const feeRows = feeRecords as AnyRow[];
 
+  const activeEnrollment = b.find((enrollment) => Boolean(enrollment.active)) ?? b[0] ?? null;
+  const activeBatch = (activeEnrollment?.batch as AnyRow | null) ?? null;
+  const courseName = activeBatch?.course_name ? String(activeBatch.course_name) : null;
+  const firstEnrollment = [...b]
+    .filter((enrollment) => Boolean(enrollment.active))
+    .sort((a, z) => String(a.joined_on).localeCompare(String(z.joined_on)))[0] ?? activeEnrollment;
+  const courseStart = firstEnrollment?.joined_on ? String(firstEnrollment.joined_on) : null;
+
   const admission = String(student.admission_date ?? "").slice(0, 10);
   const start = new Date((admission || new Date().toISOString().slice(0, 10)).slice(0, 7) + "-01T00:00:00Z");
   const currentMonth = currentMonthStart();
@@ -74,6 +82,9 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
 
         <TabsContent value="overview">
           <Card><CardContent className="grid gap-4 pt-6 sm:grid-cols-2 lg:grid-cols-3 text-sm">
+            <div><p className="text-muted-foreground text-xs">Student ID</p><p className="font-mono font-semibold">{student.student_number}</p></div>
+            <div><p className="text-muted-foreground text-xs">Course</p><p className="font-medium">{courseName || "—"}</p></div>
+            <div><p className="text-muted-foreground text-xs">Course start</p><p className="font-medium">{courseStart ? formatDate(courseStart) : "—"}</p></div>
             <div><p className="text-muted-foreground text-xs">Father name</p><p className="font-medium">{student.father_name || "—"}</p></div>
             <div><p className="text-muted-foreground text-xs">Phone</p><p className="font-medium">{student.phone}</p></div>
             <div><p className="text-muted-foreground text-xs">Parent phone</p><p className="font-medium">{student.parent_phone || "—"}</p></div>
@@ -89,14 +100,15 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
 
         <TabsContent value="batches">
           <Card><CardHeader><CardTitle>Batches</CardTitle></CardHeader><CardContent>
-            <Table><TableHeader><TableRow><TableHead>Batch</TableHead><TableHead>Joined</TableHead><TableHead>Left</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
+            <Table><TableHeader><TableRow><TableHead>Batch</TableHead><TableHead>Course</TableHead><TableHead>Joined</TableHead><TableHead>Left</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
               <TableBody>
-                {b.length === 0 ? <TableRow><TableCell colSpan={4} className="text-muted-foreground">No batch enrollments.</TableCell></TableRow> :
+                {b.length === 0 ? <TableRow><TableCell colSpan={5} className="text-muted-foreground">No batch enrollments.</TableCell></TableRow> :
                   b.map((en) => {
                     const batch = en.batch as AnyRow | null;
                     return (
                       <TableRow key={String(en.id)}>
                         <TableCell>{String(batch?.name ?? "—")}</TableCell>
+                        <TableCell>{String(batch?.course_name ?? "—")}</TableCell>
                         <TableCell>{formatDate(String(en.joined_on))}</TableCell>
                         <TableCell>{en.left_on ? formatDate(String(en.left_on)) : "—"}</TableCell>
                         <TableCell><Badge variant="outline">{en.active ? "Active" : "Inactive"}</Badge></TableCell>

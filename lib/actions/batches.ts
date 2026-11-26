@@ -45,6 +45,7 @@ export async function createBatchAction(raw: BatchFormInput): Promise<ActionResu
     .from("batches")
     .insert({
       name: v.name,
+      course_level_id: v.course_level_id,
       class_type: v.class_type,
       start_time: v.start_time,
       start_date: v.start_date,
@@ -72,6 +73,7 @@ export async function updateBatchAction(id: string, raw: BatchFormInput): Promis
   const supabase = await createClient();
   const { error } = await supabase.from("batches").update({
     name: v.name,
+    course_level_id: v.course_level_id,
     class_type: v.class_type,
     start_time: v.start_time,
     start_date: v.start_date,
@@ -85,4 +87,18 @@ export async function updateBatchAction(id: string, raw: BatchFormInput): Promis
   revalidatePath("/admin/batches");
   revalidatePath(`/admin/batches/${id}`);
   return { ok: true, data: { id }, message: "Batch updated.", warning: warning ?? undefined };
+}
+
+/**
+ * Delete a batch. Schedule, enrollments and attendance rows cascade with it;
+ * fees keep their student link and simply lose the batch reference.
+ */
+export async function deleteBatchAction(id: string): Promise<ActionResult<{ id: string }>> {
+  await requireStaff();
+  const supabase = await createClient();
+  const { error } = await supabase.from("batches").delete().eq("id", id);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/admin/batches");
+  revalidatePath("/admin", "layout");
+  return { ok: true, data: { id }, message: "Batch deleted." };
 }

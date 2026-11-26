@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { createBatchAction, updateBatchAction } from "@/lib/actions/batches";
 import { formatTime } from "@/lib/format";
 import { batchFormSchema, type BatchFormInput, type BatchFormValues } from "@/lib/validation/batches";
+import { CourseManager } from "@/components/course/course-manager";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,9 +42,16 @@ function buildSchedule(weekdays: number[], start: string) {
   }));
 }
 
-type Props = { mode?: "create" | "edit"; initial?: Partial<BatchFormValues> & { id?: string } };
+type CourseOption = { id: string; name: string };
 
-export function BatchForm({ mode = "create", initial }: Props) {
+type Props = {
+  mode?: "create" | "edit";
+  initial?: Partial<BatchFormValues> & { id?: string };
+  courses: CourseOption[];
+  tree: Array<Record<string, unknown>>;
+};
+
+export function BatchForm({ mode = "create", initial, courses, tree }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [serverError, setServerError] = useState<string | null>(null);
@@ -52,6 +60,7 @@ export function BatchForm({ mode = "create", initial }: Props) {
     resolver: zodResolver(batchFormSchema),
     defaultValues: {
       name: initial?.name ?? "",
+      course_level_id: initial?.course_level_id ?? courses[0]?.id ?? "",
       class_type: initial?.class_type ?? "weekday",
       start_date: initial?.start_date ?? new Date().toISOString().slice(0, 10),
       start_time: initial?.start_time ?? "14:00",
@@ -95,10 +104,21 @@ export function BatchForm({ mode = "create", initial }: Props) {
         <CardHeader><CardTitle>Batch details</CardTitle></CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2"><Label>Name *</Label><Input {...form.register("name")} /></div>
+          <div className="space-y-2">
+            <Label>Course *</Label>
+            <Select value={form.watch("course_level_id")} onValueChange={(v) => form.setValue("course_level_id", v ?? "", { shouldValidate: true, shouldDirty: true })}>
+              <SelectTrigger><SelectValue placeholder="Select course" /></SelectTrigger>
+              <SelectContent>
+                {courses.map((course) => <SelectItem key={course.id} value={course.id}>{course.name}</SelectItem>)}
+                {courses.length === 0 && <SelectItem value="none" disabled>No courses yet</SelectItem>}
+              </SelectContent>
+            </Select>
+            {form.formState.errors.course_level_id && <p className="text-xs text-destructive">{form.formState.errors.course_level_id.message}</p>}
+          </div>
           <div className="space-y-2"><Label>Type</Label>
             <Select value={form.watch("class_type")} onValueChange={(v) => { const type = v === "weekend" ? "weekend" : "weekday"; form.setValue("class_type", type); const days = type === "weekend" ? [6, 7] : [1, 2, 3, 4, 5]; form.setValue("weekdays", days); form.setValue("schedule", buildSchedule(days, form.getValues("start_time") ?? "14:00")); }}>
               <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent><SelectItem value="weekday">Weekday</SelectItem><SelectItem value="weekend">Weekend</SelectItem></SelectContent>
+              <SelectContent><SelectItem value="weekday">Regular classes</SelectItem><SelectItem value="weekend">Weekend</SelectItem></SelectContent>
             </Select>
           </div>
           <div className="space-y-2"><Label>Start date *</Label><Input type="date" {...form.register("start_date")} /></div>
@@ -134,6 +154,22 @@ export function BatchForm({ mode = "create", initial }: Props) {
             </table>
           </div>
           <p className="mt-2 text-xs text-muted-foreground">Schedule is auto-computed from batch start time. Regenerate after changes.</p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Course modules &amp; topics</CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Modules and topics belong to the selected course. Add them now for regular and weekend batches.
+          </p>
+        </CardHeader>
+        <CardContent>
+          {form.watch("course_level_id") ? (
+            <CourseManager tree={tree} onlyLevelId={form.watch("course_level_id")} hideAddCourse />
+          ) : (
+            <p className="text-sm text-muted-foreground">Select a course above to manage its modules and topics.</p>
+          )}
         </CardContent>
       </Card>
 

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { AnnouncementForm } from "@/components/admin/announcement-form";
+import { AnnouncementDelete } from "@/components/admin/announcement-delete";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireStaff } from "@/lib/auth/session";
@@ -29,7 +30,10 @@ export default async function AdminAnnouncementsPage() {
             <div key={a.id} className="rounded-lg border p-3">
               <div className="flex items-center justify-between gap-2">
                 <p className="font-medium">{a.title}</p>
-                <p className="text-xs text-muted-foreground">{formatDate(a.created_at)}</p>
+                <div className="flex items-center gap-1">
+                  <p className="text-xs text-muted-foreground">{formatDate(a.created_at)}</p>
+                  <AnnouncementDelete id={a.id} title={a.title} />
+                </div>
               </div>
               <p className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap">{a.body}</p>
               <p className="mt-2 text-[11px] text-muted-foreground">Target: {a.target_type === "all" ? "All students" : `Batch: ${a.batch_name ?? a.batch_id}`}</p>

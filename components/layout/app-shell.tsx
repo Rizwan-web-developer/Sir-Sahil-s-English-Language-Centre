@@ -22,7 +22,13 @@ type StaffShellProps = {
 export async function StaffShell({ profile, area, children }: StaffShellProps) {
   const areaLabel = t.areas[area];
   const settings = await getSettings();
-  const logoUrl = settingString(settings, "institute_logo_url", "") || null;
+  const instituteLogo = settingString(settings, "institute_logo_url", "");
+  const platformLogo = settingString(settings, "platform_logo_url", "") || instituteLogo;
+  const platformName =
+    settingString(settings, "platform_name", "") ||
+    settingString(settings, "institute_short_name", "") ||
+    t.app.shortName;
+  const logoUrl = platformLogo || null;
   const accountHref = area === "admin" ? "/admin/settings" : "/owner/account";
   const accountLabel = area === "admin" ? "Settings" : undefined;
 
@@ -40,6 +46,7 @@ export async function StaffShell({ profile, area, children }: StaffShellProps) {
         area={area}
         areaLabel={areaLabel}
         logoUrl={logoUrl}
+        platformName={platformName}
       />
 
       <AttendanceCenter area={area} />
@@ -50,6 +57,7 @@ export async function StaffShell({ profile, area, children }: StaffShellProps) {
           area={area}
           areaLabel={areaLabel}
           logoUrl={logoUrl}
+          platformName={platformName}
           accountHref={accountHref}
           accountLabel={accountLabel}
         />
@@ -63,7 +71,7 @@ export async function StaffShell({ profile, area, children }: StaffShellProps) {
         <footer className="mt-auto border-t px-4 py-4 sm:px-6 lg:px-8">
           <div className="mx-auto flex w-full max-w-[90rem] flex-col gap-1 text-[11px] text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
             <p>
-              © {new Date().getFullYear()} {t.app.name}
+              © {new Date().getFullYear()} {platformName}
             </p>
             <p>
               {t.app.timezone} · PKR · Week starts Monday

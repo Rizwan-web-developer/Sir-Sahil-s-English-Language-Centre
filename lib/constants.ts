@@ -39,6 +39,9 @@ export const ERROR_CODES = {
 
 /** Default values seeded into the settings table. */
 export const DEFAULT_SETTINGS = {
+  /** Whole-platform branding (sidebar, title bar, footer). */
+  platform_name: APP_SHORT_NAME,
+  platform_logo_url: "",
   management_name: "Management",
   management_logo_url: "",
   institute_name: APP_NAME,

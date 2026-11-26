@@ -4,6 +4,7 @@ import { LayersIcon, PlusIcon } from "lucide-react";
 
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
+import { BatchRowActions } from "@/components/batches/batch-row-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -37,15 +38,17 @@ export default async function BatchesPage() {
         ) : (
           <div className="overflow-x-auto rounded-lg border">
             <Table>
-              <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Type</TableHead><TableHead>Start</TableHead><TableHead>Students</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
+              <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Course</TableHead><TableHead>Type</TableHead><TableHead>Start</TableHead><TableHead>Students</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
               <TableBody>
                 {batches.map((b) => (
                   <TableRow key={String(b.id)}>
                     <TableCell><Link href={`/admin/batches/${String(b.id)}`} className="font-medium hover:underline">{String(b.name)}</Link></TableCell>
-                    <TableCell className="capitalize">{String(b.class_type)}</TableCell>
+                    <TableCell className="text-xs">{String(b.course_name ?? "—")}</TableCell>
+                    <TableCell className="capitalize">{String(b.class_type) === "weekend" ? "Weekend" : "Regular"}</TableCell>
                     <TableCell>{formatTime(String(b.start_time))}</TableCell>
                     <TableCell>{String(b.studentCount)}</TableCell>
                     <TableCell><Badge variant="outline" className="capitalize">{String(b.status)}</Badge></TableCell>
+                    <TableCell className="text-right"><BatchRowActions id={String(b.id)} name={String(b.name)} /></TableCell>
                   </TableRow>
                 ))}
               </TableBody>

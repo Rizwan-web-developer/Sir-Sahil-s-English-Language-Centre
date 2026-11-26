@@ -2,10 +2,49 @@
 
 import { revalidatePath } from "next/cache";
 
-import { requireOwner } from "@/lib/auth/session";
+import { requireOwner, requireRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 
 type Result<T = undefined> = { ok: true; data: T; message?: string } | { ok: false; error: string };
+
+type CurriculumKind = "level" | "module" | "topic" | "assignment";
+
+/** Both staff roles maintain the curriculum structure. Teaching stays owner-only. */
+async function requireCurriculumManager() {
+  return requireRole(["owner", "reception"]);
+}
+
+/** Refresh every panel that renders the course tree. */
+function revalidateCurriculum() {
+  revalidatePath("/", "layout");
+}
+
+const TABLE: Record<CurriculumKind, string> = {
+  level: "levels",
+  module: "modules",
+  topic: "topics",
+  assignment: "topic_assignments",
+};
+
+const PARENT_COLUMN: Partial<Record<CurriculumKind, string>> = {
+  module: "level_id",
+  topic: "module_id",
+  assignment: "topic_id",
+};
+
+const NAME_COLUMN: Record<CurriculumKind, string> = {
+  level: "name",
+  module: "name",
+  topic: "name",
+  assignment: "title",
+};
+
+const DESCRIPTION_COLUMN: Record<CurriculumKind, string> = {
+  level: "description",
+  module: "description",
+  topic: "description",
+  assignment: "instructions",
+};
 
 export async function markTopicCompletedAction(args: {
   batch_id: string;
@@ -110,31 +149,92 @@ export async function assignAssignmentToBatchAction(args: {
   return { ok: true, data: undefined, message: "Assignment assigned to batch students." };
 }
 
+/**
+ * Create a level (course), module, topic or assignment.
+ * When `sort_order` is omitted the item is appended to its parent.
+ */
 export async function createCurriculumItemAction(args: {
-  kind: "level" | "module" | "topic" | "assignment";
+  kind: CurriculumKind;
   parentId?: string;
   session_type: "grammar";
   name: string;
   description?: string;
   sort_order?: number;
 }): Promise<Result<{ id: string }>> {
-  await requireOwner();
+  await requireCurriculumManager();
   const supabase = await createClient();
-  let table = "";
-  let payload: Record<string, unknown> = {};
-  if (args.kind === "level") {
-    table = "levels"; payload = { name: args.name, session_type: args.session_type, description: args.description || null, sort_order: args.sort_order ?? 1 };
-  } else if (args.kind === "module") {
-    table = "modules"; payload = { level_id: args.parentId, name: args.name, session_type: args.session_type, description: args.description || null, sort_order: args.sort_order ?? 1 };
-  } else if (args.kind === "topic") {
-    table = "topics"; payload = { module_id: args.parentId, name: args.name, session_type: args.session_type, description: args.description || null, sort_order: args.sort_order ?? 1 };
-  } else {
-    table = "topic_assignments"; payload = { topic_id: args.parentId, title: args.name, instructions: args.description || null, session_type: args.session_type, sort_order: args.sort_order ?? 1, due_offset_days: 2, submission_type: "video", max_marks: 10 };
+  const table = TABLE[args.kind];
+
+  let sortOrder = args.sort_order;
+  if (sortOrder === undefined) {
+    let q = supabase.from(table).select("sort_order").order("sort_order", { ascending: false }).limit(1);
+    if (args.kind === "level") q = q.eq("session_type", args.session_type);
+    else if (args.parentId) q = q.eq(PARENT_COLUMN[args.kind] as string, args.parentId);
+    const { data } = await q;
+    sortOrder = Number((data?.[0] as { sort_order?: number } | undefined)?.sort_order ?? 0) + 1;
   }
+
+  const payload: Record<string, unknown> = {
+    [NAME_COLUMN[args.kind]]: args.name,
+    session_type: args.session_type,
+    sort_order: sortOrder,
+  };
+  if (args.description) payload[DESCRIPTION_COLUMN[args.kind]] = args.description;
+
+  if (args.kind === "level") {
+    // levels carry only the name/description/session; nothing else is required.
+  } else {
+    if (!args.parentId) return { ok: false, error: "Select a parent item first." };
+    payload[PARENT_COLUMN[args.kind] as string] = args.parentId;
+  }
+
+  if (args.kind === "assignment") {
+    payload.due_offset_days = 2;
+    payload.submission_type = "video";
+    payload.max_marks = 10;
+  }
+
   const { data, error } = await supabase.from(table).insert(payload).select("id").single();
   if (error || !data) return { ok: false, error: error?.message ?? "Could not create item." };
-  revalidatePath("/owner/curriculum");
-  revalidatePath("/owner/teaching");
-  revalidatePath("/owner/teach");
+  revalidateCurriculum();
   return { ok: true, data: { id: String((data as Record<string, unknown>).id) }, message: "Created." };
+}
+
+/** Rename an existing curriculum item. */
+export async function updateCurriculumItemAction(args: {
+  kind: CurriculumKind;
+  id: string;
+  name: string;
+  description?: string;
+}): Promise<Result> {
+  await requireCurriculumManager();
+  const supabase = await createClient();
+  const payload: Record<string, unknown> = { [NAME_COLUMN[args.kind]]: args.name };
+  if (args.description !== undefined) payload[DESCRIPTION_COLUMN[args.kind]] = args.description;
+  const { error } = await supabase.from(TABLE[args.kind]).update(payload).eq("id", args.id);
+  if (error) return { ok: false, error: error.message };
+  revalidateCurriculum();
+  return { ok: true, data: undefined, message: "Updated." };
+}
+
+/** Delete an item. Modules/topics/assignments cascade with their parent. */
+export async function deleteCurriculumItemAction(args: {
+  kind: CurriculumKind;
+  id: string;
+}): Promise<Result> {
+  await requireCurriculumManager();
+  const supabase = await createClient();
+  const { error } = await supabase.from(TABLE[args.kind]).delete().eq("id", args.id);
+  if (error) return { ok: false, error: error.message };
+  revalidateCurriculum();
+  return { ok: true, data: undefined, message: "Deleted." };
+}
+
+/** Convenience wrappers used by the course manager. */
+export async function createModuleAction(parentId: string, name: string): Promise<Result<{ id: string }>> {
+  return createCurriculumItemAction({ kind: "module", parentId, session_type: "grammar", name });
+}
+
+export async function createTopicAction(parentId: string, name: string): Promise<Result<{ id: string }>> {
+  return createCurriculumItemAction({ kind: "topic", parentId, session_type: "grammar", name });
 }

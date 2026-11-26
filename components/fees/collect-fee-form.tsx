@@ -17,7 +17,7 @@ import { formatPKR } from "@/lib/format";
 
 type FeeRecordRow = Record<string, unknown>;
 type Props = {
-  student: { id: string; full_name: string; student_code: string; phone: string };
+  student: { id: string; full_name: string; student_number?: number | null; phone: string };
   records: FeeRecordRow[];
 };
 
@@ -74,7 +74,7 @@ export function CollectFeeForm({ student, records }: Props) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Collect from {student.full_name} <span className="text-muted-foreground text-sm">({student.student_code})</span></CardTitle>
+        <CardTitle>Collect from {student.full_name} <span className="text-muted-foreground text-sm">(ID {student.student_number ?? "—"})</span></CardTitle>
       </CardHeader>
       <CardContent className="space-y-5">
         <div className="rounded-lg border overflow-x-auto">

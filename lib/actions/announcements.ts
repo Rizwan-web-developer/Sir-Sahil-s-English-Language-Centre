@@ -36,3 +36,14 @@ export async function createAnnouncementAction(input: unknown): Promise<Result> 
   revalidatePath("/portal/more");
   return { ok: true, message: "Announcement posted." };
 }
+
+export async function deleteAnnouncementAction(id: string): Promise<Result> {
+  await requireStaff();
+  const supabase = await createClient();
+  const { error } = await supabase.from("announcements").delete().eq("id", id);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/admin/announcements");
+  revalidatePath("/portal");
+  revalidatePath("/portal/more");
+  return { ok: true, message: "Announcement deleted." };
+}

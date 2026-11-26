@@ -6,6 +6,8 @@ type LogoProps = {
   size?: "sm" | "md" | "lg";
   showWordmark?: boolean;
   logoUrl?: string | null;
+  /** Platform name from settings. Falls back to the institute wordmark. */
+  name?: string | null;
   className?: string;
 };
 
@@ -30,10 +32,12 @@ export function Logo({
   size = "md",
   showWordmark = true,
   logoUrl,
+  name,
   className,
 }: LogoProps) {
   const onDark = variant === "onDark";
   const imageSizes = { sm: "h-8 w-auto", md: "h-10 w-auto", lg: "h-12 w-auto" } as const;
+  const customName = name?.trim();
 
   return (
     <span className={cn("inline-flex select-none items-center gap-3", className)}>
@@ -55,24 +59,38 @@ export function Logo({
 
       {showWordmark && (
         <span className="flex min-w-0 flex-col leading-tight">
-          <span
-            className={cn(
-              "font-medium uppercase tracking-[0.2em]",
-              nameSizes[size === "lg" ? "large" : size === "sm" ? "small" : "base"],
-              onDark ? "text-white/55" : "text-muted-foreground",
-            )}
-          >
-            Sir Sahil&apos;s
-          </span>
-          <span
-            className={cn(
-              "truncate font-heading font-semibold",
-              size === "lg" ? "text-base" : size === "sm" ? "text-xs" : "text-sm",
-              onDark ? "text-white" : "text-foreground",
-            )}
-          >
-            English Language Centre
-          </span>
+          {customName ? (
+            <span
+              className={cn(
+                "truncate font-heading font-semibold",
+                size === "lg" ? "text-base" : size === "sm" ? "text-xs" : "text-sm",
+                onDark ? "text-white" : "text-foreground",
+              )}
+            >
+              {customName}
+            </span>
+          ) : (
+            <>
+              <span
+                className={cn(
+                  "font-medium uppercase tracking-[0.2em]",
+                  nameSizes[size === "lg" ? "large" : size === "sm" ? "small" : "base"],
+                  onDark ? "text-white/55" : "text-muted-foreground",
+                )}
+              >
+                Sir Sahil&apos;s
+              </span>
+              <span
+                className={cn(
+                  "truncate font-heading font-semibold",
+                  size === "lg" ? "text-base" : size === "sm" ? "text-xs" : "text-sm",
+                  onDark ? "text-white" : "text-foreground",
+                )}
+              >
+                English Language Centre
+              </span>
+            </>
+          )}
         </span>
       )}
     </span>

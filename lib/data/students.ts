@@ -145,29 +145,35 @@ export async function getStudentById(id: string) {
 
 export async function getStudentDetail(id: string) {
   const supabase = await createClient();
-  const [studentRes, batchesRes, attendanceRes, feesRes, paymentsRes] = await Promise.all([
+  const [studentRes, batchesRes, attendanceRes, feesRes, paymentsRes, levelsRes] = await Promise.all([
     supabase.from("students").select("*").eq("id", id).maybeSingle(),
-    supabase.from("batch_students").select("id, batch_id, joined_on, left_on, active, batch:batches(id, name, class_type, start_time, status)").eq("student_id", id).order("joined_on", { ascending: false }),
+    supabase.from("batch_students").select("id, batch_id, joined_on, left_on, active, batch:batches(id, name, class_type, start_time, status, course_level_id)").eq("student_id", id).order("joined_on", { ascending: false }),
     supabase.from("attendance").select("*").eq("student_id", id).order("date", { ascending: false }).limit(100),
     supabase.from("fee_records").select("*").eq("student_id", id).order("period_month", { ascending: false }),
     supabase.from("payments").select("*").eq("student_id", id).order("paid_on", { ascending: false }).limit(100),
+    supabase.from("levels").select("id, name"),
   ]);
 
   if (studentRes.error) throw studentRes.error;
   const student = (studentRes.data as Student | null) ?? null;
   if (!student) return null;
 
+  const levelsById = new Map<string, string>();
+  for (const level of levelsRes.data ?? []) levelsById.set(String(level.id), String(level.name));
+
   return {
     student,
     batchEnrollments: (batchesRes.data ?? []).map((row) => {
       const r = row as Record<string, unknown>;
+      const batch = first<Record<string, unknown>>(r.batch as Record<string, unknown> | null);
+      const courseName = batch?.course_level_id ? levelsById.get(String(batch.course_level_id)) ?? null : null;
       return {
         id: String(r.id),
         batch_id: String(r.batch_id),
         joined_on: String(r.joined_on),
         left_on: (r.left_on as string | null) ?? null,
         active: Boolean(r.active),
-        batch: first(r.batch as Record<string, unknown> | null),
+        batch: batch ? { ...batch, course_name: courseName } : null,
       };
     }),
     attendance: attendanceRes.data ?? [],

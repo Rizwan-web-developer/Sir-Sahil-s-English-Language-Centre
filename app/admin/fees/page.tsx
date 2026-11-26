@@ -55,7 +55,7 @@ export default async function FeesPage() {
                   const phone = String(student?.phone ?? "");
                   return (
                   <TableRow key={String(row.id)}>
-                    <TableCell><div className="font-medium">{String(student?.full_name ?? "—")}</div><div className="text-[11px] text-muted-foreground">{String(student?.student_code ?? "")}</div></TableCell>
+                    <TableCell><div className="font-medium">{String(student?.full_name ?? "—")}</div><div className="text-[11px] text-muted-foreground">ID {String(student?.student_number ?? "—")}</div></TableCell>
                     <TableCell className="text-xs">{phone || "—"}</TableCell>
                     <TableCell className="text-xs">{String(row.period_month).slice(0, 7)}</TableCell>
                     <TableCell>{formatPKR(Number(row.balance))}</TableCell>

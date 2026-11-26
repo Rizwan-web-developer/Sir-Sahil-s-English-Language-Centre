@@ -13,7 +13,7 @@ export async function getFeeDashboard() {
   const [{ data: monthRecords }, { data: payments }, { data: overdue }] = await Promise.all([
     supabase.from("fee_records").select("amount_due, discount, amount_paid, status").eq("period_month", month),
     supabase.from("payments").select("amount, method, paid_on").gte("paid_on", month).lte("paid_on", today),
-    supabase.from("fee_records").select("id, student_id, period_month, amount_due, discount, amount_paid, due_date, status, student:students(id, full_name, student_code, phone)").in("status", ["pending", "partial", "overdue"]).order("due_date", { ascending: true }).limit(200),
+    supabase.from("fee_records").select("id, student_id, period_month, amount_due, discount, amount_paid, due_date, status, student:students(id, full_name, student_number, phone)").in("status", ["pending", "partial", "overdue"]).order("due_date", { ascending: true }).limit(200),
   ]);
 
   const recs = (monthRecords ?? []) as AnyRow[];
@@ -50,11 +50,14 @@ export async function getStudentFeeRecords(studentId: string) {
 export async function getStudentsForCollection(q: string) {
   const supabase = await createClient();
   const like = `%${q.trim()}%`;
+  const query = q.trim();
+  const ors = [`full_name.ilike.${like}`, `phone.ilike.${like}`, `student_code.ilike.${like}`];
+  if (/^\d+$/.test(query)) ors.push(`student_number.eq.${query}`);
   const { data } = await supabase
     .from("students")
-    .select("id, full_name, student_code, phone, status, monthly_fee, discount")
+    .select("id, full_name, student_number, phone, status, monthly_fee, discount")
     .eq("is_archived", false)
-    .or(`full_name.ilike.${like},phone.ilike.${like},student_code.ilike.${like}`)
+    .or(ors.join(","))
     .limit(20);
   return data ?? [];
 }

@@ -14,6 +14,17 @@ export async function getCurriculumTree(sessionType?: "grammar") {
   return (data ?? []) as Array<Record<string, unknown>>;
 }
 
+/** Flat course list for the batch form. */
+export async function getCourseOptions() {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("levels")
+    .select("id, name, sort_order")
+    .eq("session_type", "grammar")
+    .order("sort_order");
+  return (data ?? []) as Array<{ id: string; name: string; sort_order: number }>;
+}
+
 export async function getTeachingData(batchId: string, sessionType: "grammar") {
   const supabase = await createClient();
   const [batchRes, levelsRes, progressRes, studentsRes, assignmentRes] = await Promise.all([

@@ -21,7 +21,7 @@ export default async function CollectFeePage({ searchParams }: { searchParams: P
   let records: Array<Record<string, unknown>> = [];
   if (selectedId) {
     const supabase = await createClient();
-    const { data } = await supabase.from("students").select("id, full_name, student_code, phone").eq("id", selectedId).maybeSingle();
+    const { data } = await supabase.from("students").select("id, full_name, student_number, phone").eq("id", selectedId).maybeSingle();
     selected = (data as Record<string, unknown> | null) ?? null;
     if (selected) {
       const fee = await getStudentFeeRecords(selectedId);
@@ -35,14 +35,14 @@ export default async function CollectFeePage({ searchParams }: { searchParams: P
 
       <Card><CardContent className="pt-6 space-y-4">
         <form className="flex gap-2">
-          <Input name="q" defaultValue={q} placeholder="Search by name, phone, or student code..." />
+          <Input name="q" defaultValue={q} placeholder="Search by name, phone, or student ID..." />
           <button className="rounded-md border px-3 text-sm" type="submit">Search</button>
         </form>
         {q && (
           <div className="rounded-lg border divide-y">
             {students.length === 0 ? <p className="p-3 text-sm text-muted-foreground">No students found.</p> : (students as Array<Record<string, unknown>>).map((s) => (
               <a key={String(s.id)} href={`/admin/fees/collect?student=${String(s.id)}&q=${encodeURIComponent(q)}`} className="block p-3 text-sm hover:bg-muted/40">
-                <span className="font-medium">{String(s.full_name)}</span> <span className="text-muted-foreground">({String(s.student_code)} · {String(s.phone)})</span>
+                <span className="font-medium">{String(s.full_name)}</span> <span className="text-muted-foreground">(ID {String(s.student_number ?? "—")} · {String(s.phone)})</span>
               </a>
             ))}
           </div>
@@ -51,7 +51,7 @@ export default async function CollectFeePage({ searchParams }: { searchParams: P
 
       {selected && (
         <CollectFeeForm
-          student={{ id: String(selected.id), full_name: String(selected.full_name), student_code: String(selected.student_code), phone: String(selected.phone ?? "") }}
+          student={{ id: String(selected.id), full_name: String(selected.full_name), student_number: selected.student_number as number | null, phone: String(selected.phone ?? "") }}
           records={records}
         />
       )}

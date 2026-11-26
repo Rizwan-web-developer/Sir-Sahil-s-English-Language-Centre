@@ -86,6 +86,7 @@ export interface Batch {
   start_date: string;
   status: BatchStatus;
   notes: string | null;
+  course_level_id: string | null;
   current_conversation_level_id: string | null;
   current_grammar_level_id: string | null;
   created_at: string;

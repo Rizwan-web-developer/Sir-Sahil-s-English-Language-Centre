@@ -26,11 +26,12 @@ type TopbarProps = {
   area: StaffArea;
   areaLabel: string;
   logoUrl?: string | null;
+  platformName?: string | null;
   accountHref: string;
   accountLabel?: string;
 };
 
-export function Topbar({ profile, area, areaLabel, logoUrl, accountHref, accountLabel }: TopbarProps) {
+export function Topbar({ profile, area, areaLabel, logoUrl, platformName, accountHref, accountLabel }: TopbarProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const groups = getStaffNav(profile.role, area);
@@ -66,6 +67,7 @@ export function Topbar({ profile, area, areaLabel, logoUrl, accountHref, account
               area={area}
               areaLabel={areaLabel}
               logoUrl={logoUrl}
+              platformName={platformName}
               onNavigate={() => setOpen(false)}
             />
           </div>

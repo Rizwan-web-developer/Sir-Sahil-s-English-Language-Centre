@@ -74,7 +74,7 @@ export function ScanKiosk({ today, schedules, enrollments, marked }: Props) {
     if (!q) return [];
     return batchEnrollments.filter((e) => {
       const st = e.student as Row | null;
-      const hay = `${String(st?.full_name ?? "")} ${String(st?.phone ?? "")} ${String(st?.student_code ?? "")} ${String(st?.student_number ?? "")}`.toLowerCase();
+      const hay = `${String(st?.full_name ?? "")} ${String(st?.phone ?? "")} ${String(st?.student_number ?? "")}`.toLowerCase();
       return hay.includes(q);
     }).slice(0, 8);
   }, [search, batchEnrollments]);
@@ -226,7 +226,7 @@ export function ScanKiosk({ today, schedules, enrollments, marked }: Props) {
                   <div key={String(e.id)} className="flex items-center justify-between p-2 text-sm">
                     <div>
                       <div className="font-medium">{String(st?.full_name ?? "—")}</div>
-                      <div className="text-[11px] text-muted-foreground">{st?.student_number ? `ID ${String(st.student_number)} · ` : ""}{String(st?.student_code ?? "")}</div>
+                      <div className="text-[11px] text-muted-foreground">{st?.student_number ? `Student ID ${String(st.student_number)}` : ""}</div>
                     </div>
                     {markRow ? <Badge variant="outline" className="capitalize">{String(markRow.status)}</Badge> : <span className="text-xs text-muted-foreground">Pending</span>}
                   </div>

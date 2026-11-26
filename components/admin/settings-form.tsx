@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 
 type Props = { initial: Record<string, string> };
 
-function LogoUpload({ type, url, onChange }: { type: "management" | "institute"; url: string; onChange: (url: string) => void }) {
+function LogoUpload({ type, url, onChange }: { type: "platform" | "management" | "institute"; url: string; onChange: (url: string) => void }) {
   const ref = useRef<HTMLInputElement | null>(null);
   const [isUploading, startUpload] = useTransition();
 
@@ -49,7 +49,16 @@ export function SettingsForm({ initial }: Props) {
   const [values, setValues] = useState<Record<string, string>>(initial);
   const [isPending, startTransition] = useTransition();
 
-  const allowed = ["management_name", "management_logo_url", "institute_name", "institute_phone", "institute_address", "institute_logo_url"];
+  const allowed = [
+    "platform_name",
+    "platform_logo_url",
+    "management_name",
+    "management_logo_url",
+    "institute_name",
+    "institute_phone",
+    "institute_address",
+    "institute_logo_url",
+  ];
 
   function save() {
     startTransition(async () => {
@@ -62,6 +71,23 @@ export function SettingsForm({ initial }: Props) {
 
   return (
     <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Platform</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>Platform logo</Label>
+            <LogoUpload type="platform" url={values.platform_logo_url ?? ""} onChange={(url) => setValues((v) => ({ ...v, platform_logo_url: url }))} />
+            <p className="text-[11px] text-muted-foreground">Shown in the sidebar, mobile menu and footer across the whole platform.</p>
+          </div>
+          <div className="space-y-2">
+            <Label>Platform name</Label>
+            <Input value={values.platform_name ?? ""} onChange={(e) => setValues((v) => ({ ...v, platform_name: e.target.value }))} placeholder="SELC" />
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader><CardTitle>Management</CardTitle></CardHeader>
         <CardContent className="space-y-4">

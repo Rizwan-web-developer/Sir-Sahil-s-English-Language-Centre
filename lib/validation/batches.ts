@@ -14,6 +14,7 @@ export const batchScheduleInputSchema = z.object({
 export const batchFormSchema = z
   .object({
     name: z.string().trim().min(2, "Batch name is required.").max(120),
+    course_level_id: z.string().uuid("Select a course."),
     class_type: classTypeSchema,
     start_date: z.string().min(1, "Start date is required."),
     start_time: z.string().regex(/^\d{2}:\d{2}$/, "Use HH:MM format."),

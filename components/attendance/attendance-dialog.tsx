@@ -58,10 +58,7 @@ export function AttendanceDialog({ open, onOpenChange }: Props) {
   useEffect(() => {
     if (!open) return;
     const q = query.trim();
-    if (!q) {
-      setResults([]);
-      return;
-    }
+    if (!q) return;
     const timer = setTimeout(() => {
       startSearch(async () => {
         const res = await searchAttendanceStudentsAction(q);
@@ -139,7 +136,9 @@ export function AttendanceDialog({ open, onOpenChange }: Props) {
               ref={inputRef}
               value={query}
               onChange={(e) => {
-                setQuery(e.target.value);
+                const value = e.target.value;
+                setQuery(value);
+                if (!value.trim()) setResults([]);
                 if (detail) setDetail(null);
               }}
               placeholder="e.g. 3306 or student name"
@@ -170,7 +169,7 @@ export function AttendanceDialog({ open, onOpenChange }: Props) {
               >
                 <div className="min-w-0">
                   <p className="truncate font-medium">{s.full_name}</p>
-                  <p className="text-xs text-muted-foreground">ID {s.student_number} · {s.student_code}</p>
+                  <p className="text-xs text-muted-foreground">Student ID {s.student_number}</p>
                 </div>
                 <Badge variant="outline" className="capitalize">{s.status}</Badge>
               </button>
@@ -184,9 +183,7 @@ export function AttendanceDialog({ open, onOpenChange }: Props) {
               <StudentQr value={detail.student.student_number} size={88} className="shrink-0" />
               <div className="min-w-0 flex-1">
                 <p className="font-semibold">{detail.student.full_name}</p>
-                <p className="text-xs text-muted-foreground">
-                  ID {detail.student.student_number} · {detail.student.student_code}
-                </p>
+                <p className="text-xs text-muted-foreground">Student ID {detail.student.student_number}</p>
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {detail.todayAttendance ? (
                     <Badge className={cn("capitalize", detail.todayAttendance.status === "present" ? "bg-success text-white" : "")}>

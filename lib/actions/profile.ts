@@ -41,7 +41,8 @@ export async function uploadProfileAvatarAction(formData: FormData): Promise<Res
 }
 
 export async function uploadInstituteLogoAction(formData: FormData): Promise<Result<{ url: string }>> {
-  const type = String(formData.get("type") ?? "institute") === "management" ? "management" : "institute";
+  const requested = String(formData.get("type") ?? "institute");
+  const type = requested === "management" || requested === "platform" ? requested : "institute";
   const session = await requireStaff();
   const file = formData.get("file");
   if (!(file instanceof File) || !file.size) return { ok: false, error: "Please select a PNG/logo image." };
@@ -61,10 +62,24 @@ export async function uploadInstituteLogoAction(formData: FormData): Promise<Res
 
   const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
   const url = `${pub.publicUrl}?t=${Date.now()}`;
-  const key = type === "management" ? "management_logo_url" : "institute_logo_url";
+  const key =
+    type === "management"
+      ? "management_logo_url"
+      : type === "platform"
+        ? "platform_logo_url"
+        : "institute_logo_url";
   const { error } = await supabase.from("settings").upsert({ key, value: url, updated_by: session.profile.id }, { onConflict: "key" });
   if (error) return { ok: false, error: error.message };
 
   revalidatePath("/", "layout");
-  return { ok: true, data: { url }, message: type === "management" ? "Management logo updated." : "Institute logo updated." };
+  return {
+    ok: true,
+    data: { url },
+    message:
+      type === "management"
+        ? "Management logo updated."
+        : type === "platform"
+          ? "Platform logo updated."
+          : "Institute logo updated.",
+  };
 }

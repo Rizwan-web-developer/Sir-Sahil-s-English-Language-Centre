@@ -152,7 +152,7 @@ const en = {
     completed: "Completed",
   },
   classType: {
-    weekday: "Weekday",
+    weekday: "Regular classes",
     weekend: "Weekend",
   },
   feeStatus: {

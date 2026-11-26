@@ -20,6 +20,7 @@ type SidebarProps = {
   area: StaffArea;
   areaLabel: string;
   logoUrl?: string | null;
+  platformName?: string | null;
   onNavigate?: () => void;
 };
 
@@ -31,6 +32,7 @@ export function SidebarContent({
   profile,
   area,
   logoUrl,
+  platformName,
   onNavigate,
 }: SidebarProps) {
   const pathname = usePathname();
@@ -40,8 +42,8 @@ export function SidebarContent({
   return (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
       <div className="flex items-center border-b border-sidebar-border px-5 py-4">
-        <Link href="/" onClick={onNavigate} aria-label={t.app.name}>
-          <Logo variant="onDark" logoUrl={logoUrl} />
+        <Link href="/" onClick={onNavigate} aria-label={platformName || t.app.name}>
+          <Logo variant="onDark" logoUrl={logoUrl} name={platformName} />
         </Link>
       </div>
 

@@ -21,7 +21,11 @@ export async function PortalShell({
   children: ReactNode;
 }) {
   const settings = await getSettings();
-  const logoUrl = settingString(settings, "institute_logo_url", "") || null;
+  const logoUrl = settingString(settings, "platform_logo_url", "") || settingString(settings, "institute_logo_url", "") || null;
+  const platformName =
+    settingString(settings, "platform_name", "") ||
+    settingString(settings, "institute_short_name", "") ||
+    t.app.shortName;
   return (
     <div className="min-h-dvh bg-background">
       <a
@@ -33,7 +37,7 @@ export async function PortalShell({
 
       <header className="sticky top-0 z-30 border-b bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
         <div className="mx-auto flex h-16 w-full max-w-2xl items-center gap-2 px-4">
-          <Logo size="sm" logoUrl={logoUrl} />
+          <Logo size="sm" logoUrl={logoUrl} name={platformName} />
           <div className="ml-auto flex items-center gap-1.5">
             <ThemeToggle />
             <UserMenu profile={profile} accountHref="/portal/account" />
