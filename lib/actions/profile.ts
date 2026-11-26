@@ -36,7 +36,9 @@ export async function uploadProfileAvatarAction(formData: FormData): Promise<Res
   const { error } = await supabase.from("profiles").update({ avatar_url: url }).eq("id", session.profile.id);
   if (error) return { ok: false, error: error.message };
 
-  revalidatePath("/", "layout");
+  revalidatePath("/admin", "layout");
+  revalidatePath("/owner", "layout");
+  revalidatePath("/portal", "layout");
   return { ok: true, data: { url }, message: "Profile photo updated." };
 }
 
@@ -72,7 +74,9 @@ export async function uploadInstituteLogoAction(formData: FormData): Promise<Res
     const { error } = await supabase.from("settings").upsert({ key, value: url, updated_by: session.profile.id }, { onConflict: "key" });
     if (error) return { ok: false, error: error.message };
 
-    revalidatePath("/", "layout");
+    revalidatePath("/admin", "layout");
+    revalidatePath("/owner", "layout");
+    revalidatePath("/portal", "layout");
     return { ok: true, data: { url }, message: "Logo updated." };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Logo upload failed." };

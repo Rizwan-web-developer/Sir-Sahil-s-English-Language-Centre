@@ -6,6 +6,7 @@ import type { Profile } from "@/types/domain";
 
 import { AppSidebar } from "./app-sidebar";
 import { AttendanceCenter } from "@/components/attendance/attendance-center";
+import { AutoRefresh } from "@/components/shared/auto-refresh";
 import type { StaffArea } from "./nav-config";
 import { Topbar } from "./topbar";
 
@@ -50,6 +51,7 @@ export async function StaffShell({ profile, area, children }: StaffShellProps) {
       />
 
       <AttendanceCenter area={area} />
+      <AutoRefresh intervalMs={20000} />
 
       <div className="flex min-h-dvh min-w-0 flex-col">
         <Topbar

@@ -99,6 +99,6 @@ export async function deleteBatchAction(id: string): Promise<ActionResult<{ id: 
   const { error } = await supabase.from("batches").delete().eq("id", id);
   if (error) return { ok: false, error: error.message };
   revalidatePath("/admin/batches");
-  revalidatePath("/admin", "layout");
+  revalidatePath("/admin");
   return { ok: true, data: { id }, message: "Batch deleted." };
 }

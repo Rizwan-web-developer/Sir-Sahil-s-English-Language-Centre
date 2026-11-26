@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { EyeIcon, PencilIcon, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
@@ -20,6 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 
 export function BatchRowActions({ id, name }: { id: string; name: string }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -32,6 +34,7 @@ export function BatchRowActions({ id, name }: { id: string; name: string }) {
       }
       toast.success(result.message ?? "Batch deleted");
       setOpen(false);
+      router.refresh();
     });
   }
 

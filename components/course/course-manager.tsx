@@ -1,7 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { BookOpenIcon, PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
 
@@ -46,8 +45,46 @@ type Props = {
   hideAddCourse?: boolean;
 };
 
+function isKind(node: Node, kind: Kind) {
+  if (kind === "level") return Array.isArray(node.modules);
+  if (kind === "module") return Array.isArray(node.topics);
+  return !Array.isArray(node.modules) && !Array.isArray(node.topics);
+}
+
+function updateName(nodes: Node[], kind: Kind, id: string, name: string): Node[] {
+  return nodes.map((n) => {
+    if (String(n.id) === id && isKind(n, kind)) return { ...n, name };
+    return {
+      ...n,
+      ...(Array.isArray(n.modules) ? { modules: updateName(children(n.modules), kind, id, name) } : {}),
+      ...(Array.isArray(n.topics) ? { topics: updateName(children(n.topics), kind, id, name) } : {}),
+    };
+  });
+}
+
+function removeNode(nodes: Node[], kind: Kind, id: string): Node[] {
+  return nodes
+    .filter((n) => !(String(n.id) === id && isKind(n, kind)))
+    .map((n) => ({
+      ...n,
+      ...(Array.isArray(n.modules) ? { modules: removeNode(children(n.modules), kind, id) } : {}),
+      ...(Array.isArray(n.topics) ? { topics: removeNode(children(n.topics), kind, id) } : {}),
+    }));
+}
+
+function addNode(nodes: Node[], kind: Kind, parentId: string | undefined, node: Node): Node[] {
+  if (kind === "level") return [...nodes, node];
+  return nodes.map((n) => {
+    if (kind === "module" && String(n.id) === parentId) return { ...n, modules: [...children(n.modules), node] };
+    if (kind === "topic" && Array.isArray(n.modules)) {
+      return { ...n, modules: children(n.modules).map((m) => (String(m.id) === parentId ? { ...m, topics: [...children(m.topics), node] } : m)) };
+    }
+    return n;
+  });
+}
+
 export function CourseManager({ tree, onlyLevelId, hideAddCourse }: Props) {
-  const router = useRouter();
+  const [localTree, setLocalTree] = useState<Node[]>(tree);
   const [isPending, startTransition] = useTransition();
   const [newCourse, setNewCourse] = useState("");
   const [moduleDraft, setModuleDraft] = useState<Record<string, string>>({});
@@ -56,9 +93,11 @@ export function CourseManager({ tree, onlyLevelId, hideAddCourse }: Props) {
   const [renameValue, setRenameValue] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<{ kind: Kind; id: string; name: string } | null>(null);
 
-  const levels = tree.filter((level) => !onlyLevelId || String(level.id) === onlyLevelId);
+  useEffect(() => { setLocalTree(tree); }, [tree]);
 
-  function run(task: () => Promise<{ ok: true; message?: string } | { ok: false; error: string }>, fallback: string, onOk?: () => void) {
+  const levels = localTree.filter((level) => !onlyLevelId || String(level.id) === onlyLevelId);
+
+  function run<T>(task: () => Promise<{ ok: true; data?: T; message?: string } | { ok: false; error: string }>, fallback: string, onOk?: (data?: T) => void) {
     startTransition(async () => {
       const res = await task();
       if (!res.ok) {
@@ -66,31 +105,38 @@ export function CourseManager({ tree, onlyLevelId, hideAddCourse }: Props) {
         return;
       }
       toast.success(res.message ?? fallback);
-      onOk?.();
-      router.refresh();
+      onOk?.((res as { data?: T }).data);
     });
   }
 
   function addCourse() {
     const name = newCourse.trim();
     if (!name) return toast.error("Course name is required.");
-    run(() => createCurriculumItemAction({ kind: "level", session_type: "grammar", name }), "Course added", () => setNewCourse(""));
+    run(() => createCurriculumItemAction({ kind: "level", session_type: "grammar", name }), "Course added", (data) => {
+      const id = (data as { id?: string } | undefined)?.id ?? crypto.randomUUID();
+      setLocalTree((prev) => addNode(prev, "level", undefined, { id, name, session_type: "grammar", sort_order: prev.length + 1, modules: [] }));
+      setNewCourse("");
+    });
   }
 
   function addModule(levelId: string) {
     const name = (moduleDraft[levelId] ?? "").trim();
     if (!name) return toast.error("Module name is required.");
-    run(() => createCurriculumItemAction({ kind: "module", parentId: levelId, session_type: "grammar", name }), "Module added", () =>
-      setModuleDraft((current) => ({ ...current, [levelId]: "" })),
-    );
+    run(() => createCurriculumItemAction({ kind: "module", parentId: levelId, session_type: "grammar", name }), "Module added", (data) => {
+      const id = (data as { id?: string } | undefined)?.id ?? crypto.randomUUID();
+      setLocalTree((prev) => addNode(prev, "module", levelId, { id, name, session_type: "grammar", sort_order: 999, topics: [] }));
+      setModuleDraft((current) => ({ ...current, [levelId]: "" }));
+    });
   }
 
   function addTopic(moduleId: string) {
     const name = (topicDraft[moduleId] ?? "").trim();
     if (!name) return toast.error("Topic name is required.");
-    run(() => createCurriculumItemAction({ kind: "topic", parentId: moduleId, session_type: "grammar", name }), "Topic added", () =>
-      setTopicDraft((current) => ({ ...current, [moduleId]: "" })),
-    );
+    run(() => createCurriculumItemAction({ kind: "topic", parentId: moduleId, session_type: "grammar", name }), "Topic added", (data) => {
+      const id = (data as { id?: string } | undefined)?.id ?? crypto.randomUUID();
+      setLocalTree((prev) => addNode(prev, "topic", moduleId, { id, name, session_type: "grammar", sort_order: 999, topic_assignments: [] }));
+      setTopicDraft((current) => ({ ...current, [moduleId]: "" }));
+    });
   }
 
   function openRename(kind: Kind, item: Node) {
@@ -104,12 +150,20 @@ export function CourseManager({ tree, onlyLevelId, hideAddCourse }: Props) {
     const name = renameValue.trim();
     if (!name) return toast.error("Name is required.");
     if (name === renameTarget.name) return setRenameTarget(null);
-    run(() => updateCurriculumItemAction({ kind: renameTarget.kind, id: renameTarget.id, name }), "Renamed", () => setRenameTarget(null));
+    const target = renameTarget;
+    run(() => updateCurriculumItemAction({ kind: target.kind, id: target.id, name }), "Renamed", () => {
+      setLocalTree((prev) => updateName(prev, target.kind, target.id, name));
+      setRenameTarget(null);
+    });
   }
 
   function confirmDelete() {
     if (!deleteTarget) return;
-    run(() => deleteCurriculumItemAction({ kind: deleteTarget.kind, id: deleteTarget.id }), "Deleted", () => setDeleteTarget(null));
+    const target = deleteTarget;
+    run(() => deleteCurriculumItemAction({ kind: target.kind, id: target.id }), "Deleted", () => {
+      setLocalTree((prev) => removeNode(prev, target.kind, target.id));
+      setDeleteTarget(null);
+    });
   }
 
   return (

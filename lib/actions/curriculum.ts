@@ -14,9 +14,13 @@ async function requireCurriculumManager() {
   return requireRole(["owner", "reception"]);
 }
 
-/** Refresh every panel that renders the course tree. */
+/** Refresh panels that render the course tree without invalidating the whole app. */
 function revalidateCurriculum() {
-  revalidatePath("/", "layout");
+  revalidatePath("/admin/courses");
+  revalidatePath("/owner/curriculum");
+  revalidatePath("/owner/teaching");
+  revalidatePath("/owner/teach");
+  revalidatePath("/admin/batches");
 }
 
 const TABLE: Record<CurriculumKind, string> = {
