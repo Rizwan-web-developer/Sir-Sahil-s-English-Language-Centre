@@ -60,7 +60,7 @@ export function BatchForm({ mode = "create", initial, courses, tree }: Props) {
     resolver: zodResolver(batchFormSchema),
     defaultValues: {
       name: initial?.name ?? "",
-      course_level_id: initial?.course_level_id ?? courses[0]?.id ?? "",
+      course_level_id: initial?.course_level_id ?? "",
       class_type: initial?.class_type ?? "weekday",
       start_date: initial?.start_date ?? new Date().toISOString().slice(0, 10),
       start_time: initial?.start_time ?? "14:00",
@@ -96,6 +96,7 @@ export function BatchForm({ mode = "create", initial, courses, tree }: Props) {
   }
 
   const schedule = form.watch("schedule");
+  const selectedCourseName = courses.find((c) => c.id === form.watch("course_level_id"))?.name;
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -106,8 +107,10 @@ export function BatchForm({ mode = "create", initial, courses, tree }: Props) {
           <div className="space-y-2"><Label>Name *</Label><Input {...form.register("name")} /></div>
           <div className="space-y-2">
             <Label>Course *</Label>
-            <Select value={form.watch("course_level_id")} onValueChange={(v) => form.setValue("course_level_id", v ?? "", { shouldValidate: true, shouldDirty: true })}>
-              <SelectTrigger><SelectValue placeholder="Select course" /></SelectTrigger>
+            <Select value={form.watch("course_level_id") || undefined} onValueChange={(v) => form.setValue("course_level_id", v ?? "", { shouldValidate: true, shouldDirty: true })}>
+              <SelectTrigger>
+                {selectedCourseName ? <SelectValue placeholder="Select">{selectedCourseName}</SelectValue> : <SelectValue placeholder="Select" />}
+              </SelectTrigger>
               <SelectContent>
                 {courses.map((course) => <SelectItem key={course.id} value={course.id}>{course.name}</SelectItem>)}
                 {courses.length === 0 && <SelectItem value="none" disabled>No courses yet</SelectItem>}

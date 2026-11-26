@@ -51,7 +51,7 @@ export async function StaffShell({ profile, area, children }: StaffShellProps) {
       />
 
       <AttendanceCenter area={area} />
-      <AutoRefresh intervalMs={20000} />
+      <AutoRefresh intervalMs={120000} />
 
       <div className="flex min-h-dvh min-w-0 flex-col">
         <Topbar

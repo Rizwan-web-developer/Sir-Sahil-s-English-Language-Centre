@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { BookOpenIcon, PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
 
@@ -94,7 +94,11 @@ export function CourseManager({ tree, onlyLevelId, hideAddCourse }: Props) {
   const [renameValue, setRenameValue] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<{ kind: Kind; id: string; name: string } | null>(null);
 
-  useEffect(() => { setLocalTree(tree); }, [tree]);
+  const [prevTree, setPrevTree] = useState(tree);
+  if (tree !== prevTree) {
+    setPrevTree(tree);
+    setLocalTree(tree);
+  }
 
   const levels = localTree.filter((level) => !onlyLevelId || String(level.id) === onlyLevelId);
 
