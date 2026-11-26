@@ -230,6 +230,13 @@ export async function deleteCurriculumItemAction(args: {
   return { ok: true, data: undefined, message: "Deleted." };
 }
 
+/** Client-safe read for lazy Course tabs. */
+export async function getCurriculumTreeAction() {
+  await requireCurriculumManager();
+  const { getCurriculumTree } = await import("@/lib/data/curriculum");
+  return getCurriculumTree("grammar");
+}
+
 /** Convenience wrappers used by the course manager. */
 export async function createModuleAction(parentId: string, name: string): Promise<Result<{ id: string }>> {
   return createCurriculumItemAction({ kind: "module", parentId, session_type: "grammar", name });

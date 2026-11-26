@@ -3,7 +3,6 @@ import Link from "next/link";
 import {
   ArrowRightIcon,
   BadgeCheckIcon,
-  BookOpenIcon,
   CalendarDaysIcon,
   CalendarX2Icon,
   LayersIcon,
@@ -15,7 +14,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import { CourseManager } from "@/components/course/course-manager";
+import { CourseTab } from "@/components/course/course-tab";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { SessionBadge } from "@/components/shared/session-badge";
@@ -23,7 +22,6 @@ import { StatCard } from "@/components/shared/stat-card";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { requireStaff } from "@/lib/auth/session";
-import { getCurriculumTree } from "@/lib/data/curriculum";
 import { getAdminOverview } from "@/lib/data/dashboard";
 import { formatDate, formatLongDate, formatPKR, formatTime } from "@/lib/format";
 import { dayLabel, t } from "@/lib/i18n";
@@ -45,10 +43,7 @@ const quickLinks: Array<{
 
 export default async function AdminDashboardPage() {
   const { profile } = await requireStaff();
-  const [overview, courseTree] = await Promise.all([
-    getAdminOverview(),
-    getCurriculumTree("grammar"),
-  ]);
+  const overview = await getAdminOverview();
   const weekday = isoDayOfWeek(overview.today);
 
   return (
@@ -254,18 +249,7 @@ export default async function AdminDashboardPage() {
         </TabsContent>
 
         <TabsContent value="course" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BookOpenIcon className="size-4 text-muted-foreground" />
-                Course modules &amp; topics
-              </CardTitle>
-              <CardDescription>
-                Beginner, Pre-Intermediate, Intermediate, Advanced and Proficiency. Add or remove modules and topics for each course.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-          <CourseManager tree={courseTree} />
+          <CourseTab />
         </TabsContent>
       </Tabs>
     </div>
