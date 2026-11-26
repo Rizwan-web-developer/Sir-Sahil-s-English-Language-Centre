@@ -36,9 +36,10 @@ export default async function StudentIdCardPage({ params }: { params: Promise<{ 
             batch_name: String(batchObj?.name ?? "—"),
             timing: batchObj?.start_time ? String(batchObj.start_time).slice(0, 5) : "—",
           }}
-          instituteName={settingString(settings, "institute_name", "Sir Sahil's English Language Centre")}
+          instituteName={settingString(settings, "platform_name", "") || settingString(settings, "institute_name", "Sir Sahil's English Language Centre")}
           institutePhone={settingString(settings, "institute_phone", "")}
           instituteAddress={settingString(settings, "institute_address", "")}
+          logoUrl={settingString(settings, "platform_logo_url", "") || settingString(settings, "institute_logo_url", "") || null}
         />
       </div>
       <p className="text-xs text-muted-foreground print:hidden">Tip: use browser print and set scale to 100% for CR80 card printing.</p>

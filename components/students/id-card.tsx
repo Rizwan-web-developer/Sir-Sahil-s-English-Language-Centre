@@ -15,6 +15,7 @@ type IdCardProps = {
   instituteName?: string;
   institutePhone?: string;
   instituteAddress?: string;
+  logoUrl?: string | null;
 };
 
 export function StudentIdCard({
@@ -22,13 +23,22 @@ export function StudentIdCard({
   instituteName = "Sir Sahil's English Language Centre",
   institutePhone = "",
   instituteAddress = "",
+  logoUrl,
 }: IdCardProps) {
   return (
     <div className="grid gap-4 print:grid-cols-2">
       <div className="w-[340px] rounded-xl border bg-white text-slate-900 shadow-sm overflow-hidden">
         <div className="bg-[#0d2544] px-4 py-3 text-white">
-          <p className="text-[10px] uppercase tracking-[0.2em] text-[#c9a227]">Student ID Card</p>
-          <p className="font-heading text-sm font-semibold">{instituteName}</p>
+          <div className="flex items-center gap-2">
+            {logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={logoUrl} alt="" className="h-8 w-8 rounded bg-white/10 object-contain p-0.5" />
+            ) : null}
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-[#c9a227]">Student ID Card</p>
+              <p className="font-heading text-sm font-semibold">{instituteName}</p>
+            </div>
+          </div>
         </div>
         <div className="flex gap-3 p-4">
           <div className="size-20 shrink-0 overflow-hidden rounded-lg bg-slate-100 border">
@@ -59,8 +69,16 @@ export function StudentIdCard({
 
       <div className="w-[340px] rounded-xl border bg-white text-slate-900 shadow-sm overflow-hidden">
         <div className="bg-[#0d2544] px-4 py-3 text-white">
-          <p className="text-[10px] uppercase tracking-[0.2em] text-[#c9a227]">Card Back</p>
-          <p className="font-heading text-sm font-semibold">{instituteName}</p>
+          <div className="flex items-center gap-2">
+            {logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={logoUrl} alt="" className="h-8 w-8 rounded bg-white/10 object-contain p-0.5" />
+            ) : null}
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-[#c9a227]">Card Back</p>
+              <p className="font-heading text-sm font-semibold">{instituteName}</p>
+            </div>
+          </div>
         </div>
         <div className="p-4 text-xs space-y-2">
           <p><span className="font-medium">Address:</span> {instituteAddress || "—"}</p>

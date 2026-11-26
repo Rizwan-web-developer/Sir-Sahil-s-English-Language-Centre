@@ -41,45 +41,40 @@ export async function uploadProfileAvatarAction(formData: FormData): Promise<Res
 }
 
 export async function uploadInstituteLogoAction(formData: FormData): Promise<Result<{ url: string }>> {
-  const requested = String(formData.get("type") ?? "institute");
-  const type = requested === "management" || requested === "platform" ? requested : "institute";
-  const session = await requireStaff();
-  const file = formData.get("file");
-  if (!(file instanceof File) || !file.size) return { ok: false, error: "Please select a PNG/logo image." };
-  if (!file.type.startsWith("image/")) return { ok: false, error: "Only image files are allowed." };
-  if (file.size > 5 * 1024 * 1024) return { ok: false, error: "Image must be 5 MB or smaller." };
+  try {
+    const requested = String(formData.get("type") ?? "institute");
+    const type = requested === "management" || requested === "platform" ? requested : "institute";
+    const session = await requireStaff();
+    const file = formData.get("file");
+    if (!(file instanceof File) || !file.size) return { ok: false, error: "Please select an image." };
+    if (!file.type.startsWith("image/")) return { ok: false, error: "Only image files are allowed." };
+    if (file.size > 5 * 1024 * 1024) return { ok: false, error: "Image must be 5 MB or smaller." };
 
-  const supabase = await createClient();
-  const ext = extFromName(file.name);
-  const path = `branding/${type}-logo.${ext}`;
-  const bytes = new Uint8Array(await file.arrayBuffer());
-  const { error: uploadError } = await supabase.storage.from("avatars").upload(path, bytes, {
-    upsert: true,
-    contentType: file.type,
-    cacheControl: "3600",
-  });
-  if (uploadError) return { ok: false, error: uploadError.message };
+    const supabase = await createClient();
+    const ext = extFromName(file.name);
+    const path = `branding/${type}-logo.${ext}`;
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    const { error: uploadError } = await supabase.storage.from("avatars").upload(path, bytes, {
+      upsert: true,
+      contentType: file.type,
+      cacheControl: "3600",
+    });
+    if (uploadError) return { ok: false, error: uploadError.message };
 
-  const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
-  const url = `${pub.publicUrl}?t=${Date.now()}`;
-  const key =
-    type === "management"
-      ? "management_logo_url"
-      : type === "platform"
-        ? "platform_logo_url"
-        : "institute_logo_url";
-  const { error } = await supabase.from("settings").upsert({ key, value: url, updated_by: session.profile.id }, { onConflict: "key" });
-  if (error) return { ok: false, error: error.message };
-
-  revalidatePath("/", "layout");
-  return {
-    ok: true,
-    data: { url },
-    message:
+    const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
+    const url = `${pub.publicUrl}?t=${Date.now()}`;
+    const key =
       type === "management"
-        ? "Management logo updated."
+        ? "management_logo_url"
         : type === "platform"
-          ? "Platform logo updated."
-          : "Institute logo updated.",
-  };
+          ? "platform_logo_url"
+          : "institute_logo_url";
+    const { error } = await supabase.from("settings").upsert({ key, value: url, updated_by: session.profile.id }, { onConflict: "key" });
+    if (error) return { ok: false, error: error.message };
+
+    revalidatePath("/", "layout");
+    return { ok: true, data: { url }, message: "Logo updated." };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Logo upload failed." };
+  }
 }

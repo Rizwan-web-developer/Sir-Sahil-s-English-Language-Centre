@@ -20,9 +20,10 @@ export default async function NewStudentPage() {
       />
       <StudentForm
         batches={batches.filter((b) => b.status === "active")}
-        instituteName={settingString(settings, "institute_name", "Sir Sahil's English Language Centre")}
+        instituteName={settingString(settings, "platform_name", "") || settingString(settings, "institute_name", "Sir Sahil's English Language Centre")}
         institutePhone={settingString(settings, "institute_phone", "")}
         instituteAddress={settingString(settings, "institute_address", "")}
+        logoUrl={settingString(settings, "platform_logo_url", "") || settingString(settings, "institute_logo_url", "") || null}
       />
     </div>
   );

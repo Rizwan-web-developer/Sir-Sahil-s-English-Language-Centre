@@ -31,9 +31,10 @@ type Props = {
   instituteName?: string;
   institutePhone?: string;
   instituteAddress?: string;
+  logoUrl?: string | null;
 };
 
-export function StudentForm({ batches, initial, mode = "create", instituteName, institutePhone, instituteAddress }: Props) {
+export function StudentForm({ batches, initial, mode = "create", instituteName, institutePhone, instituteAddress, logoUrl }: Props) {
   const [isPending, startTransition] = useTransition();
   const [serverError, setServerError] = useState<string | null>(null);
   const [photoUploading, setPhotoUploading] = useState(false);
@@ -163,6 +164,7 @@ export function StudentForm({ batches, initial, mode = "create", instituteName, 
                     instituteName={instituteName}
                     institutePhone={institutePhone}
                     instituteAddress={instituteAddress}
+                    logoUrl={logoUrl}
                   />
                   <Button type="button" onClick={() => window.print()}>Print ID Card</Button>
                 </div>

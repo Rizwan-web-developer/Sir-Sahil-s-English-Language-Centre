@@ -5,7 +5,7 @@ import { ThemeProvider } from "@/components/providers/theme-provider";
 import { ServiceWorkerRegister } from "@/components/shared/sw-register";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { APP_NAME, APP_SHORT_NAME } from "@/lib/constants";
+import { getSettings, settingString } from "@/lib/settings";
 
 import "./globals.css";
 
@@ -19,23 +19,26 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: {
-    default: `${APP_NAME} — Management Platform`,
-    template: `%s · ${APP_SHORT_NAME}`,
-  },
-  description:
-    "Admissions, timetable, fees, barcode attendance, curriculum progress and certificates for Sir Sahil's English Language Centre.",
-  applicationName: `${APP_SHORT_NAME} Management Platform`,
-  manifest: "/manifest.webmanifest",
-  authors: [{ name: APP_NAME }],
-  openGraph: {
-    title: APP_NAME,
-    description:
-      "One calm workspace for admissions, attendance, fees and English course progress.",
-    type: "website",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSettings();
+  const name = settingString(settings, "platform_name", "") || "Sir Sahil's English Language Centre";
+  const short = name.length > 28 ? "SELC" : name;
+  const description = `${name} — admissions, batches, fees, attendance and course management.`;
+
+  return {
+    title: { default: name, template: `%s · ${short}` },
+    description,
+    applicationName: name,
+    manifest: "/manifest.webmanifest",
+    icons: {
+      icon: [{ url: "/api/icon" }],
+      shortcut: ["/api/icon"],
+      apple: [{ url: "/api/icon" }],
+    },
+    openGraph: { title: name, description, type: "website" },
+    robots: { index: true, follow: true },
+  };
+}
 
 export const viewport: Viewport = {
   width: "device-width",

@@ -31,9 +31,10 @@ export default async function PortalIdCardPage() {
             batch_name: batch?.name ?? "—",
             timing: batch?.start_time ? String(batch.start_time).slice(0, 5) : "—",
           }}
-          instituteName={settingString(settings, "institute_name", "Sir Sahil's English Language Centre")}
+          instituteName={settingString(settings, "platform_name", "") || settingString(settings, "institute_name", "Sir Sahil's English Language Centre")}
           institutePhone={settingString(settings, "institute_phone", "")}
           instituteAddress={settingString(settings, "institute_address", "")}
+          logoUrl={settingString(settings, "platform_logo_url", "") || settingString(settings, "institute_logo_url", "") || null}
         />
       </div>
       <p className="text-xs text-muted-foreground">Tip: you can also print/download your ID card from reception.</p>
