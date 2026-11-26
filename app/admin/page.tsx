@@ -14,13 +14,12 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import { CourseTab } from "@/components/course/course-tab";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { SessionBadge } from "@/components/shared/session-badge";
 import { StatCard } from "@/components/shared/stat-card";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { requireStaff } from "@/lib/auth/session";
 import { getAdminOverview } from "@/lib/data/dashboard";
 import { formatDate, formatLongDate, formatPKR, formatTime } from "@/lib/format";
@@ -74,13 +73,7 @@ export default async function AdminDashboardPage() {
         }
       />
 
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="course">Course</TabsTrigger>
-        </TabsList>
 
-        <TabsContent value="overview" className="space-y-6">
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
@@ -246,12 +239,7 @@ export default async function AdminDashboardPage() {
           </div>
         </CardContent>
       </Card>
-        </TabsContent>
 
-        <TabsContent value="course" className="space-y-4">
-          <CourseTab />
-        </TabsContent>
-      </Tabs>
     </div>
   );
 }

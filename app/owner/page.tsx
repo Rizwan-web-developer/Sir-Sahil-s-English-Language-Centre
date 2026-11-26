@@ -10,14 +10,13 @@ import {
   TargetIcon,
 } from "lucide-react";
 
-import { CourseTab } from "@/components/course/course-tab";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { SessionBadge } from "@/components/shared/session-badge";
 import { StatCard } from "@/components/shared/stat-card";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { requireOwner } from "@/lib/auth/session";
 import { getOwnerOverview } from "@/lib/data/dashboard";
 import { formatDate, formatLongDate } from "@/lib/format";
@@ -55,13 +54,7 @@ export default async function OwnerOverviewPage() {
         }
       />
 
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="course">Course</TabsTrigger>
-        </TabsList>
 
-        <TabsContent value="overview" className="space-y-6">
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label={t.dashboard.activeBatches} value={overview.activeBatches} hint="Active batches" icon={LayersIcon} />
         <StatCard label={t.dashboard.topicsToday} value={overview.topicsToday} hint="Across both sessions" icon={TargetIcon} tone="gold" />
@@ -132,7 +125,7 @@ export default async function OwnerOverviewPage() {
               {[
                 { label: "Batches & Course", href: "/owner/teaching", icon: GraduationCapIcon },
                 { label: "Assignment Submissions", href: "/owner/assignments?status=submitted", icon: ClipboardCheckIcon },
-                { label: "Curriculum", href: "/owner/curriculum", icon: TargetIcon },
+                { label: "Courses", href: "/owner/curriculum", icon: TargetIcon },
                 { label: "Certificates", href: "/owner/certificates", icon: AwardIcon },
               ].map((link) => {
                 const Icon = link.icon;
@@ -148,12 +141,6 @@ export default async function OwnerOverviewPage() {
           </Card>
         </div>
       </div>
-        </TabsContent>
-
-        <TabsContent value="course" className="space-y-4">
-          <CourseTab />
-        </TabsContent>
-      </Tabs>
     </div>
   );
 }

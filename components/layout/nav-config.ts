@@ -51,7 +51,7 @@ export function getStaffNav(_role: UserRole, area: StaffArea): NavGroup[] {
         items: [
           { label: "Dashboard", href: "/owner", icon: LayoutDashboard, exact: true },
           { label: "Batches & Course", href: "/owner/teaching", icon: GraduationCap },
-          { label: "Curriculum", href: "/owner/curriculum", icon: BookMarked },
+          { label: "Courses", href: "/owner/curriculum", icon: BookMarked },
           { label: "Assignment Submissions", href: "/owner/assignments", icon: ClipboardCheck },
           { label: "Rankings", href: "/owner/rankings", icon: Trophy },
           { label: "Certificates", href: "/owner/certificates", icon: Award },
@@ -70,6 +70,7 @@ export function getStaffNav(_role: UserRole, area: StaffArea): NavGroup[] {
         { label: "Dashboard", href: "/admin", icon: LayoutDashboard, exact: true },
         { label: t.nav.students, href: "/admin/students", icon: Users },
         { label: t.nav.batches, href: "/admin/batches", icon: Layers },
+        { label: "Courses", href: "/admin/courses", icon: BookMarked },
         { label: t.nav.attendance, href: "/admin/attendance", icon: ScanLine, dialog: "attendance" },
         { label: t.nav.fees, href: "/admin/fees", icon: Wallet },
         { label: "Announcements", href: "/admin/announcements", icon: Megaphone },
