@@ -1,12 +1,15 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import { approveCertificateAction, revokeCertificateAction } from "@/lib/actions/certificates";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 type Row = Record<string, unknown>;
@@ -21,6 +24,8 @@ export function CertificatesManager({
   thresholds: { minAttendance: number; minMarks: number; blockIfDues: boolean };
 }) {
   const [isPending, startTransition] = useTransition();
+  const [revokeTarget, setRevokeTarget] = useState<string | null>(null);
+  const [revokeReason, setRevokeReason] = useState("");
 
   function approve(studentId: string, levelId: string) {
     startTransition(async () => {
@@ -30,11 +35,22 @@ export function CertificatesManager({
   }
 
   function revoke(id: string) {
-    const reason = window.prompt("Reason for revoking this certificate?") ?? "";
-    if (!reason.trim()) return;
+    setRevokeTarget(id);
+    setRevokeReason("");
+  }
+
+  function submitRevoke() {
+    if (!revokeTarget) return;
+    const reason = revokeReason.trim();
+    if (!reason) return toast.error("Reason is required.");
     startTransition(async () => {
-      const res = await revokeCertificateAction({ id, reason });
-      if (!res.ok) toast.error(res.error); else toast.success(res.message ?? "Revoked");
+      const res = await revokeCertificateAction({ id: revokeTarget, reason });
+      if (!res.ok) toast.error(res.error);
+      else {
+        toast.success(res.message ?? "Revoked");
+        setRevokeTarget(null);
+        setRevokeReason("");
+      }
     });
   }
 
@@ -100,6 +116,23 @@ export function CertificatesManager({
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={Boolean(revokeTarget)} onOpenChange={(open) => { if (!open) { setRevokeTarget(null); setRevokeReason(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Revoke certificate</DialogTitle>
+            <DialogDescription>Enter a reason for revoking this certificate.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="revoke-reason">Reason</Label>
+            <Input id="revoke-reason" value={revokeReason} onChange={(e) => setRevokeReason(e.target.value)} placeholder="Reason..." />
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => { setRevokeTarget(null); setRevokeReason(""); }} disabled={isPending}>Cancel</Button>
+            <Button type="button" variant="destructive" onClick={submitRevoke} disabled={isPending}>Revoke</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

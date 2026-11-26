@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { CheckCircle2Icon, RotateCcwIcon, SkipForwardIcon } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 import { assignAssignmentToBatchAction, markTopicCompletedAction, skipTopicAction, undoTopicProgressAction } from "@/lib/actions/curriculum";
 import { Badge } from "@/components/ui/badge";
@@ -31,6 +32,8 @@ export function TeachingPanel({
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [note, setNote] = useState("");
   const [assignId, setAssignId] = useState("");
+  const [skipTarget, setSkipTarget] = useState<string | null>(null);
+  const [skipReason, setSkipReason] = useState("");
 
   function go(batch: string, session: string) {
     const params = new URLSearchParams();
@@ -61,11 +64,22 @@ export function TeachingPanel({
     });
   }
   function skip(topicId: string) {
-    const reason = window.prompt("Reason for skipping this topic?") ?? "";
-    if (!reason.trim()) return;
+    setSkipTarget(topicId);
+    setSkipReason("");
+  }
+
+  function submitSkip() {
+    if (!skipTarget) return;
+    const reason = skipReason.trim();
+    if (!reason) return toast.error("Reason is required.");
     startTransition(async () => {
-      const res = await skipTopicAction({ batch_id: selectedBatchId, session_type: selectedSession, topic_id: topicId, reason });
-      if (!res.ok) toast.error(res.error); else toast.success(res.message ?? "Skipped");
+      const res = await skipTopicAction({ batch_id: selectedBatchId, session_type: selectedSession, topic_id: skipTarget, reason });
+      if (!res.ok) toast.error(res.error);
+      else {
+        toast.success(res.message ?? "Skipped");
+        setSkipTarget(null);
+        setSkipReason("");
+      }
     });
   }
   function assignToBatch() {
@@ -176,6 +190,23 @@ export function TeachingPanel({
           </Card>
         </>
       )}
+
+      <Dialog open={Boolean(skipTarget)} onOpenChange={(open) => { if (!open) { setSkipTarget(null); setSkipReason(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Skip topic</DialogTitle>
+            <DialogDescription>Enter a reason for skipping this topic.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="skip-reason">Reason</Label>
+            <Input id="skip-reason" value={skipReason} onChange={(e) => setSkipReason(e.target.value)} placeholder="Reason..." />
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => { setSkipTarget(null); setSkipReason(""); }} disabled={isPending}>Cancel</Button>
+            <Button type="button" onClick={submitSkip} disabled={isPending}>Skip topic</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

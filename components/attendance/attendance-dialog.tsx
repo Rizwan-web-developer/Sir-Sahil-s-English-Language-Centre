@@ -39,6 +39,41 @@ type Props = {
   onOpenChange: (open: boolean) => void;
 };
 
+function Placeholder() {
+  return (
+    <div className="space-y-3 rounded-xl border p-4" aria-hidden="true">
+      <div className="flex items-start gap-3">
+        <div className="grid size-[88px] shrink-0 place-items-center rounded-lg border border-dashed bg-muted/30 text-muted-foreground">
+          <ScanLineIcon className="size-6" />
+        </div>
+        <div className="min-w-0 flex-1 space-y-2">
+          <div className="h-4 w-40 rounded bg-muted/60" />
+          <div className="h-3 w-28 rounded bg-muted/40" />
+          <div className="mt-2 h-5 w-28 rounded-full bg-muted/40" />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Monthly fee (6 months)</p>
+        <div className="grid gap-1.5">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="flex items-center justify-between rounded-md border border-dashed px-3 py-2 text-sm text-muted-foreground/70">
+              <span className="h-3 w-24 rounded bg-muted/40" />
+              <span className="h-3 w-16 rounded bg-muted/30" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex gap-2">
+        <Button disabled>Present</Button>
+        <Button variant="outline" disabled>Clear</Button>
+      </div>
+      <p className="text-[11px] text-muted-foreground">Search student by ID or name to load details.</p>
+    </div>
+  );
+}
+
 export function AttendanceDialog({ open, onOpenChange }: Props) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchRow[]>([]);
@@ -53,7 +88,7 @@ export function AttendanceDialog({ open, onOpenChange }: Props) {
     if (!open) return;
     const t = setTimeout(() => inputRef.current?.focus(), 120);
     return () => clearTimeout(t);
-  }, [open, detail]);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -95,7 +130,6 @@ export function AttendanceDialog({ open, onOpenChange }: Props) {
         return;
       }
       toast.success(res.message ?? "Attendance marked");
-      // Refresh detail
       const refreshed = await getAttendanceStudentDetailAction(detail.student.id);
       if (refreshed.ok) setDetail(refreshed.data);
     });
@@ -116,14 +150,14 @@ export function AttendanceDialog({ open, onOpenChange }: Props) {
         if (!next) reset();
       }}
     >
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ScanLineIcon className="size-4 text-gold" />
             Attendance
           </DialogTitle>
           <DialogDescription>
-            Student ID ya name likhein, profile select karein, phir Present mark karein.
+            Student ID ya name search karein, student select karein, phir Present mark karein.
           </DialogDescription>
         </DialogHeader>
 
@@ -138,10 +172,13 @@ export function AttendanceDialog({ open, onOpenChange }: Props) {
               onChange={(e) => {
                 const value = e.target.value;
                 setQuery(value);
-                if (!value.trim()) setResults([]);
+                if (!value.trim()) {
+                  setResults([]);
+                  setError(null);
+                }
                 if (detail) setDetail(null);
               }}
-              placeholder="e.g. 3306 or student name"
+              placeholder="Type student ID or name..."
               autoComplete="off"
               className="h-11 pl-9"
             />
@@ -159,7 +196,7 @@ export function AttendanceDialog({ open, onOpenChange }: Props) {
         )}
 
         {!detail && results.length > 0 && (
-          <div className="max-h-64 overflow-auto rounded-lg border divide-y">
+          <div className="max-h-56 overflow-auto rounded-lg border divide-y">
             {results.map((s) => (
               <button
                 key={s.id}
@@ -177,7 +214,9 @@ export function AttendanceDialog({ open, onOpenChange }: Props) {
           </div>
         )}
 
-        {detail && (
+        {!detail ? (
+          <Placeholder />
+        ) : (
           <div className="space-y-3 rounded-xl border p-4">
             <div className="flex items-start gap-3">
               <StudentQr value={detail.student.student_number} size={88} className="shrink-0" />
@@ -199,7 +238,7 @@ export function AttendanceDialog({ open, onOpenChange }: Props) {
             </div>
 
             <div className="space-y-2">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Monthly fee (6 months)</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Monthly fee (6 months)</p>
               <div className="grid gap-1.5">
                 {detail.fees.map((fee) => {
                   const future = fee.isFuture;

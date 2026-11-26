@@ -2,12 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import {
-  BookOpenIcon,
-  PencilIcon,
-  PlusIcon,
-  Trash2Icon,
-} from "lucide-react";
+import { BookOpenIcon, PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -15,12 +10,25 @@ import {
   deleteCurriculumItemAction,
   updateCurriculumItemAction,
 } from "@/lib/actions/curriculum";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type Node = Record<string, unknown>;
+type Kind = "level" | "module" | "topic";
 
 function children(value: unknown): Node[] {
   return Array.isArray(value) ? (value as Node[]) : [];
@@ -38,24 +46,19 @@ type Props = {
   hideAddCourse?: boolean;
 };
 
-/**
- * Course tree manager: courses (levels) -> modules -> topics.
- * Used on the dashboard Course tab, the owner curriculum page, and inside a
- * batch so modules/topics can be added straight after choosing a course.
- */
 export function CourseManager({ tree, onlyLevelId, hideAddCourse }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [newCourse, setNewCourse] = useState("");
   const [moduleDraft, setModuleDraft] = useState<Record<string, string>>({});
   const [topicDraft, setTopicDraft] = useState<Record<string, string>>({});
+  const [renameTarget, setRenameTarget] = useState<{ kind: Kind; id: string; name: string } | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<{ kind: Kind; id: string; name: string } | null>(null);
 
   const levels = tree.filter((level) => !onlyLevelId || String(level.id) === onlyLevelId);
 
-  function run(
-    task: () => Promise<{ ok: true; message?: string } | { ok: false; error: string }>,
-    fallback: string,
-  ) {
+  function run(task: () => Promise<{ ok: true; message?: string } | { ok: false; error: string }>, fallback: string, onOk?: () => void) {
     startTransition(async () => {
       const res = await task();
       if (!res.ok) {
@@ -63,64 +66,50 @@ export function CourseManager({ tree, onlyLevelId, hideAddCourse }: Props) {
         return;
       }
       toast.success(res.message ?? fallback);
+      onOk?.();
       router.refresh();
     });
   }
 
   function addCourse() {
     const name = newCourse.trim();
-    if (!name) {
-      toast.error("Course name is required.");
-      return;
-    }
-    run(
-      () => createCurriculumItemAction({ kind: "level", session_type: "grammar", name }),
-      "Course added",
-    );
-    setNewCourse("");
+    if (!name) return toast.error("Course name is required.");
+    run(() => createCurriculumItemAction({ kind: "level", session_type: "grammar", name }), "Course added", () => setNewCourse(""));
   }
 
   function addModule(levelId: string) {
     const name = (moduleDraft[levelId] ?? "").trim();
-    if (!name) {
-      toast.error("Module name is required.");
-      return;
-    }
-    run(
-      () => createCurriculumItemAction({ kind: "module", parentId: levelId, session_type: "grammar", name }),
-      "Module added",
+    if (!name) return toast.error("Module name is required.");
+    run(() => createCurriculumItemAction({ kind: "module", parentId: levelId, session_type: "grammar", name }), "Module added", () =>
+      setModuleDraft((current) => ({ ...current, [levelId]: "" })),
     );
-    setModuleDraft((current) => ({ ...current, [levelId]: "" }));
   }
 
   function addTopic(moduleId: string) {
     const name = (topicDraft[moduleId] ?? "").trim();
-    if (!name) {
-      toast.error("Topic name is required.");
-      return;
-    }
-    run(
-      () => createCurriculumItemAction({ kind: "topic", parentId: moduleId, session_type: "grammar", name }),
-      "Topic added",
-    );
-    setTopicDraft((current) => ({ ...current, [moduleId]: "" }));
-  }
-
-  function rename(kind: "level" | "module" | "topic", item: Node) {
-    const next = window.prompt("Rename", label(item));
-    if (!next || !next.trim() || next.trim() === label(item)) return;
-    run(
-      () => updateCurriculumItemAction({ kind, id: String(item.id), name: next.trim() }),
-      "Renamed",
+    if (!name) return toast.error("Topic name is required.");
+    run(() => createCurriculumItemAction({ kind: "topic", parentId: moduleId, session_type: "grammar", name }), "Topic added", () =>
+      setTopicDraft((current) => ({ ...current, [moduleId]: "" })),
     );
   }
 
-  function remove(kind: "level" | "module" | "topic", item: Node) {
-    if (!window.confirm(`Delete "${label(item)}"? Everything inside it will be deleted too.`)) return;
-    run(
-      () => deleteCurriculumItemAction({ kind, id: String(item.id) }),
-      "Deleted",
-    );
+  function openRename(kind: Kind, item: Node) {
+    const name = label(item);
+    setRenameTarget({ kind, id: String(item.id), name });
+    setRenameValue(name);
+  }
+
+  function submitRename() {
+    if (!renameTarget) return;
+    const name = renameValue.trim();
+    if (!name) return toast.error("Name is required.");
+    if (name === renameTarget.name) return setRenameTarget(null);
+    run(() => updateCurriculumItemAction({ kind: renameTarget.kind, id: renameTarget.id, name }), "Renamed", () => setRenameTarget(null));
+  }
+
+  function confirmDelete() {
+    if (!deleteTarget) return;
+    run(() => deleteCurriculumItemAction({ kind: deleteTarget.kind, id: deleteTarget.id }), "Deleted", () => setDeleteTarget(null));
   }
 
   return (
@@ -173,20 +162,17 @@ export function CourseManager({ tree, onlyLevelId, hideAddCourse }: Props) {
                 <div className="min-w-0">
                   <CardTitle className="flex flex-wrap items-center gap-2">
                     {label(level)}
-                    <Badge variant="outline" className="text-[10px] uppercase tracking-wide">
-                      Course
-                    </Badge>
+                    <Badge variant="outline" className="text-[10px] uppercase tracking-wide">Course</Badge>
                   </CardTitle>
                   <CardDescription>
-                    {modules.length} {modules.length === 1 ? "module" : "modules"} ·{" "}
-                    {modules.reduce((sum, module) => sum + children(module.topics).length, 0)} topics
+                    {modules.length} {modules.length === 1 ? "module" : "modules"} · {modules.reduce((sum, module) => sum + children(module.topics).length, 0)} topics
                   </CardDescription>
                 </div>
                 <div className="flex shrink-0 gap-1">
-                  <Button type="button" variant="ghost" size="icon-sm" aria-label="Rename course" onClick={() => rename("level", level)} disabled={isPending}>
+                  <Button type="button" variant="ghost" size="icon-sm" aria-label="Rename course" onClick={() => openRename("level", level)} disabled={isPending}>
                     <PencilIcon className="size-3.5" />
                   </Button>
-                  <Button type="button" variant="ghost" size="icon-sm" aria-label="Delete course" onClick={() => remove("level", level)} disabled={isPending}>
+                  <Button type="button" variant="ghost" size="icon-sm" aria-label="Delete course" onClick={() => setDeleteTarget({ kind: "level", id: levelId, name: label(level) })} disabled={isPending}>
                     <Trash2Icon className="size-3.5 text-destructive" />
                   </Button>
                 </div>
@@ -194,9 +180,7 @@ export function CourseManager({ tree, onlyLevelId, hideAddCourse }: Props) {
 
               <CardContent className="space-y-3">
                 {modules.length === 0 && (
-                  <p className="rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground">
-                    No modules yet. Add the first module below.
-                  </p>
+                  <p className="rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground">No modules yet. Add the first module below.</p>
                 )}
 
                 {modules.map((module) => {
@@ -207,15 +191,13 @@ export function CourseManager({ tree, onlyLevelId, hideAddCourse }: Props) {
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div className="flex min-w-0 items-center gap-2">
                           <p className="truncate text-sm font-medium">{label(module)}</p>
-                          <Badge variant="secondary" className="text-[10px]">
-                            {topics.length} {topics.length === 1 ? "topic" : "topics"}
-                          </Badge>
+                          <Badge variant="secondary" className="text-[10px]">{topics.length} {topics.length === 1 ? "topic" : "topics"}</Badge>
                         </div>
                         <div className="flex gap-1">
-                          <Button type="button" variant="ghost" size="icon-xs" aria-label="Rename module" onClick={() => rename("module", module)} disabled={isPending}>
+                          <Button type="button" variant="ghost" size="icon-xs" aria-label="Rename module" onClick={() => openRename("module", module)} disabled={isPending}>
                             <PencilIcon className="size-3" />
                           </Button>
-                          <Button type="button" variant="ghost" size="icon-xs" aria-label="Delete module" onClick={() => remove("module", module)} disabled={isPending}>
+                          <Button type="button" variant="ghost" size="icon-xs" aria-label="Delete module" onClick={() => setDeleteTarget({ kind: "module", id: moduleId, name: label(module) })} disabled={isPending}>
                             <Trash2Icon className="size-3 text-destructive" />
                           </Button>
                         </div>
@@ -226,18 +208,16 @@ export function CourseManager({ tree, onlyLevelId, hideAddCourse }: Props) {
                           <div key={String(topic.id)} className="flex items-center justify-between gap-2 rounded-md bg-background px-3 py-1.5">
                             <span className="truncate text-sm">{label(topic)}</span>
                             <div className="flex shrink-0 gap-0.5">
-                              <Button type="button" variant="ghost" size="icon-xs" aria-label="Rename topic" onClick={() => rename("topic", topic)} disabled={isPending}>
+                              <Button type="button" variant="ghost" size="icon-xs" aria-label="Rename topic" onClick={() => openRename("topic", topic)} disabled={isPending}>
                                 <PencilIcon className="size-3" />
                               </Button>
-                              <Button type="button" variant="ghost" size="icon-xs" aria-label="Delete topic" onClick={() => remove("topic", topic)} disabled={isPending}>
+                              <Button type="button" variant="ghost" size="icon-xs" aria-label="Delete topic" onClick={() => setDeleteTarget({ kind: "topic", id: String(topic.id), name: label(topic) })} disabled={isPending}>
                                 <Trash2Icon className="size-3 text-destructive" />
                               </Button>
                             </div>
                           </div>
                         ))}
-                        {topics.length === 0 && (
-                          <p className="px-1 text-xs text-muted-foreground">No topics yet.</p>
-                        )}
+                        {topics.length === 0 && <p className="px-1 text-xs text-muted-foreground">No topics yet.</p>}
                       </div>
 
                       <div className="mt-2 flex flex-wrap gap-2">
@@ -285,6 +265,38 @@ export function CourseManager({ tree, onlyLevelId, hideAddCourse }: Props) {
           );
         })
       )}
+
+      <Dialog open={Boolean(renameTarget)} onOpenChange={(open) => !open && setRenameTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rename {renameTarget?.kind}</DialogTitle>
+            <DialogDescription>Update the name and save.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="rename-value">Name</Label>
+            <Input id="rename-value" value={renameValue} onChange={(e) => setRenameValue(e.target.value)} onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), submitRename())} />
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setRenameTarget(null)} disabled={isPending}>Cancel</Button>
+            <Button type="button" onClick={submitRename} disabled={isPending}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={Boolean(deleteTarget)} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {deleteTarget?.kind}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              “{deleteTarget?.name}” and everything inside it will be deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} disabled={isPending}>{isPending ? "Deleting..." : "Delete"}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
