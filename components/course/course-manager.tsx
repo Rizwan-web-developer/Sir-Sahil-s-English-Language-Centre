@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import {
   createCurriculumItemAction,
   deleteCurriculumItemAction,
+  getCurriculumTreeAction,
   updateCurriculumItemAction,
 } from "@/lib/actions/curriculum";
 import {
@@ -97,6 +98,15 @@ export function CourseManager({ tree, onlyLevelId, hideAddCourse }: Props) {
 
   const levels = localTree.filter((level) => !onlyLevelId || String(level.id) === onlyLevelId);
 
+  async function refreshTree() {
+    try {
+      const data = await getCurriculumTreeAction();
+      setLocalTree(data as Node[]);
+    } catch {
+      // local optimistic update already applied
+    }
+  }
+
   function run<T>(task: () => Promise<{ ok: true; data?: T; message?: string } | { ok: false; error: string }>, fallback: string, onOk?: (data?: T) => void) {
     startTransition(async () => {
       const res = await task();
@@ -106,6 +116,7 @@ export function CourseManager({ tree, onlyLevelId, hideAddCourse }: Props) {
       }
       toast.success(res.message ?? fallback);
       onOk?.((res as { data?: T }).data);
+      void refreshTree();
     });
   }
 
