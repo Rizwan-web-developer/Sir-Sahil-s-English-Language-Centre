@@ -25,6 +25,13 @@ function zodFieldErrors(error: { issues: Array<{ path: PropertyKey[]; message: s
   return fieldErrors;
 }
 
+function friendlyStudentDbError(error: { code?: string; message: string }) {
+  if (error.code === "23505" && error.message.includes("students_cnic_unique_idx")) {
+    return "This CNIC/B-Form is already registered with another student.";
+  }
+  return error.message;
+}
+
 function normalizePhone(value: string | null | undefined) {
   return (value ?? "").replace(/\D/g, "");
 }
@@ -47,8 +54,7 @@ async function findDuplicateStudent(input: {
   const { data } = await supabase
     .from("students")
     .select("id, full_name, student_code, phone, cnic_or_bform, father_name, is_archived")
-    .eq("is_archived", false)
-    .limit(200);
+    .limit(300);
 
   return (data ?? []).find((row) => {
     if (input.id && row.id === input.id) return false;
@@ -75,7 +81,7 @@ export async function createStudentAction(
 
   const values = parsed.data;
   const duplicate = await findDuplicateStudent({
-    phone: values.phone,
+    phone: values.whatsapp_number,
     cnic_or_bform: values.cnic_or_bform,
     full_name: values.full_name,
     father_name: values.father_name,
@@ -83,7 +89,7 @@ export async function createStudentAction(
   if (duplicate) {
     return {
       ok: false,
-      error: `Possible duplicate: ${duplicate.full_name} (${duplicate.student_code}) already exists with matching phone/CNIC/name.`,
+      error: `Possible duplicate: ${duplicate.full_name} (${duplicate.student_code}) already exists with matching WhatsApp/CNIC/name.`,
     };
   }
 
@@ -102,7 +108,7 @@ export async function createStudentAction(
     password,
     email_confirm: true,
     app_metadata: { role: "student" },
-    user_metadata: { full_name: values.full_name, phone: values.phone },
+    user_metadata: { full_name: values.full_name, phone: values.whatsapp_number },
   });
   if (authError || !authData.user) {
     return { ok: false, error: authError?.message ?? "Could not create student login." };
@@ -119,9 +125,9 @@ export async function createStudentAction(
       profile_id: authData.user.id,
       full_name: values.full_name,
       father_name: values.father_name || null,
-      phone: values.phone,
-      parent_phone: values.parent_phone || null,
-      whatsapp: values.whatsapp_same_as_phone ? values.phone : values.whatsapp || null,
+      phone: values.whatsapp_number,
+      parent_phone: values.guardian_whatsapp || null,
+      whatsapp: values.whatsapp_number || null,
       cnic_or_bform: values.cnic_or_bform || null,
       address: values.address || null,
       photo_url: values.photo_url || null,
@@ -140,7 +146,9 @@ export async function createStudentAction(
 
   if (insertError || !student) {
     await admin.auth.admin.deleteUser(authData.user.id);
-    return { ok: false, error: insertError?.message ?? "Could not create student record." };
+    const msg = insertError ? friendlyStudentDbError(insertError) : "Could not create student record.";
+    const fieldErrors = insertError?.code === "23505" && insertError.message.includes("students_cnic_unique_idx") ? { cnic_or_bform: msg } : undefined;
+    return { ok: false, error: msg, fieldErrors };
   }
 
   const finalEmail = `${String(student.student_code).toLowerCase()}@selc.local`;
@@ -182,7 +190,7 @@ export async function updateStudentAction(
   const values = parsed.data;
   const duplicate = await findDuplicateStudent({
     id,
-    phone: values.phone,
+    phone: values.whatsapp_number,
     cnic_or_bform: values.cnic_or_bform,
     full_name: values.full_name,
     father_name: values.father_name,
@@ -202,9 +210,9 @@ export async function updateStudentAction(
     .update({
       full_name: values.full_name,
       father_name: values.father_name || null,
-      phone: values.phone,
-      parent_phone: values.parent_phone || null,
-      whatsapp: values.whatsapp_same_as_phone ? values.phone : values.whatsapp || null,
+      phone: values.whatsapp_number,
+      parent_phone: values.guardian_whatsapp || null,
+      whatsapp: values.whatsapp_number || null,
       cnic_or_bform: values.cnic_or_bform || null,
       address: values.address || null,
       photo_url: values.photo_url || null,
@@ -217,7 +225,11 @@ export async function updateStudentAction(
     })
     .eq("id", id);
 
-  if (error) return { ok: false, error: error.message };
+  if (error) {
+    const msg = friendlyStudentDbError(error);
+    const fieldErrors = error.code === "23505" && error.message.includes("students_cnic_unique_idx") ? { cnic_or_bform: msg } : undefined;
+    return { ok: false, error: msg, fieldErrors };
+  }
 
   // Sync batch enrollments (active set = selected batch_ids).
   const selected = new Set(values.batch_ids ?? []);

@@ -38,7 +38,7 @@ export function StudentFilters({ batches }: Props) {
         <SearchIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           defaultValue={sp.get("q") ?? ""}
-          placeholder="Search name, phone, code..."
+          placeholder="Search name, WhatsApp, ID..."
           className="pl-9"
           onKeyDown={(e) => {
             if (e.key === "Enter") update("q", (e.currentTarget as HTMLInputElement).value);

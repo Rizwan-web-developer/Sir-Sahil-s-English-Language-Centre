@@ -51,10 +51,8 @@ export function StudentForm({ batches, initial, mode = "create", instituteName, 
       cnic_or_bform: initial?.cnic_or_bform ?? "",
       address: initial?.address ?? "",
       photo_url: initial?.photo_url ?? "",
-      phone: initial?.phone ?? "",
-      parent_phone: initial?.parent_phone ?? "",
-      whatsapp: initial?.whatsapp ?? "",
-      whatsapp_same_as_phone: initial?.whatsapp_same_as_phone ?? false,
+      whatsapp_number: initial?.whatsapp_number ?? "+92",
+      guardian_whatsapp: initial?.guardian_whatsapp ?? "+92",
       admission_date: initial?.admission_date ?? new Date().toISOString().slice(0, 10),
       batch_ids: initial?.batch_ids ?? [],
       monthly_fee: initial?.monthly_fee ?? 0,
@@ -68,7 +66,6 @@ export function StudentForm({ batches, initial, mode = "create", instituteName, 
     },
   });
 
-  const sameAsPhone = form.watch("whatsapp_same_as_phone");
   const photoUrl = form.watch("photo_url");
 
   function toggleBatch(batchId: string, checked: boolean) {
@@ -217,20 +214,22 @@ export function StudentForm({ batches, initial, mode = "create", instituteName, 
       </Card>
 
       <Card>
-        <CardHeader><CardTitle>Contact & login</CardTitle></CardHeader>
+        <CardHeader><CardTitle>Contact &amp; login</CardTitle></CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2"><Label htmlFor="phone">Phone *</Label><Input id="phone" {...form.register("phone")} />{err("phone") && <p className="text-xs text-destructive">{err("phone")}</p>}</div>
-          <div className="space-y-2"><Label htmlFor="parent_phone">Parent phone</Label><Input id="parent_phone" {...form.register("parent_phone")} /></div>
           <div className="space-y-2">
-            <Label htmlFor="whatsapp">WhatsApp</Label>
-            <Input id="whatsapp" disabled={sameAsPhone} {...form.register("whatsapp")} />
-            <label className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Checkbox checked={sameAsPhone} onCheckedChange={(v) => form.setValue("whatsapp_same_as_phone", Boolean(v), { shouldDirty: true })} />
-              Same as phone
-            </label>
+            <Label htmlFor="whatsapp_number">WhatsApp Number *</Label>
+            <Input id="whatsapp_number" placeholder="+923001234567" {...form.register("whatsapp_number")} />
+            {err("whatsapp_number") && <p className="text-xs text-destructive">{err("whatsapp_number")}</p>}
+            <p className="text-[11px] text-muted-foreground">Must be in +92 format, e.g. +923001234567.</p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="guardian_whatsapp">Guardian WhatsApp Number *</Label>
+            <Input id="guardian_whatsapp" placeholder="+923001234567" {...form.register("guardian_whatsapp")} />
+            {err("guardian_whatsapp") && <p className="text-xs text-destructive">{err("guardian_whatsapp")}</p>}
+            <p className="text-[11px] text-muted-foreground">Must be in +92 format, e.g. +923001234567.</p>
           </div>
           {mode === "create" && (
-            <div className="space-y-2">
+            <div className="space-y-2 md:col-span-2">
               <Label htmlFor="password">Password *</Label>
               <Input id="password" type="text" {...form.register("password")} placeholder="Set student login password" />
               {err("password") && <p className="text-xs text-destructive">{err("password")}</p>}

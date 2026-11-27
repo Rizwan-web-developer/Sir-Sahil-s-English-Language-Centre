@@ -94,7 +94,7 @@ export default async function AdminStudentsPage({
                     <TableRow>
                       <TableHead>Student</TableHead>
                       <TableHead>Student ID</TableHead>
-                      <TableHead>Phone</TableHead>
+                      <TableHead>WhatsApp</TableHead>
                       <TableHead>Batch</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Fee</TableHead>
@@ -111,7 +111,7 @@ export default async function AdminStudentsPage({
                           <div className="text-[11px] text-muted-foreground">{student.father_name || "—"}</div>
                         </TableCell>
                         <TableCell className="font-mono text-xs font-semibold">{student.student_number}</TableCell>
-                        <TableCell className="text-xs">{student.phone}</TableCell>
+                        <TableCell className="text-xs">{student.whatsapp || student.phone}</TableCell>
                         <TableCell className="text-xs">{student.batches.map((b) => b.name).join(", ") || "—"}</TableCell>
                         <TableCell>
                           <Badge variant="outline" className="capitalize">{student.status}</Badge>

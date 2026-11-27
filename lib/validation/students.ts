@@ -7,6 +7,23 @@ export const studentStatusSchema = z.enum([
   "completed",
 ]);
 
+function normalizePkWhatsApp(value: string) {
+  const digits = value.replace(/\D/g, "");
+  if (digits.startsWith("92") && digits.length === 12) return `+${digits}`;
+  if (digits.startsWith("0") && digits.length === 11) return `+92${digits.slice(1)}`;
+  if (value.trim().startsWith("+")) return `+${digits}`;
+  return value.trim();
+}
+
+function whatsappSchema(label: string) {
+  return z
+    .string()
+    .trim()
+    .min(1, `${label} is required.`)
+    .transform(normalizePkWhatsApp)
+    .refine((v) => /^\+92\d{10}$/.test(v), `${label} must be in +92XXXXXXXXXX format.`);
+}
+
 export const studentFormSchema = z.object({
   full_name: z.string().trim().min(2, "Student name is required.").max(120),
   father_name: z.string().trim().max(120).optional().or(z.literal("")),
@@ -14,14 +31,8 @@ export const studentFormSchema = z.object({
   cnic_or_bform: z.string().trim().min(5, "CNIC / B-Form is required.").max(30),
   address: z.string().trim().max(500).optional().or(z.literal("")),
   photo_url: z.string().trim().max(500).optional().or(z.literal("")),
-  phone: z
-    .string()
-    .trim()
-    .min(10, "Phone number is required.")
-    .max(20, "Phone number is too long."),
-  parent_phone: z.string().trim().max(20).optional().or(z.literal("")),
-  whatsapp: z.string().trim().max(20).optional().or(z.literal("")),
-  whatsapp_same_as_phone: z.boolean().optional().default(false),
+  whatsapp_number: whatsappSchema("WhatsApp number"),
+  guardian_whatsapp: whatsappSchema("Guardian WhatsApp number"),
   admission_date: z.string().min(1, "Admission date is required."),
   batch_ids: z.array(z.string().uuid()).optional().default([]),
   monthly_fee: z.coerce.number().min(0, "Monthly fee cannot be negative.").default(0),

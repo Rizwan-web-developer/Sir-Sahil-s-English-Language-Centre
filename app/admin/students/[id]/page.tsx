@@ -55,7 +55,7 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
       <PageHeader
         eyebrow="Student profile"
         title={student.full_name}
-        description={`Student ID ${student.student_number} · CNIC ${student.cnic_or_bform || "—"} · ${student.phone}`}
+        description={`Student ID ${student.student_number} · CNIC ${student.cnic_or_bform || "—"} · ${student.whatsapp || student.phone}`}
         actions={
           <div className="flex flex-wrap gap-2">
             <Button nativeButton={false} variant="outline" render={<Link href="/admin/students" />}><ArrowLeftIcon className="size-4" />Back</Button>
@@ -86,9 +86,8 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
             <div><p className="text-muted-foreground text-xs">Course</p><p className="font-medium">{courseName || "—"}</p></div>
             <div><p className="text-muted-foreground text-xs">Course start</p><p className="font-medium">{courseStart ? formatDate(courseStart) : "—"}</p></div>
             <div><p className="text-muted-foreground text-xs">Father name</p><p className="font-medium">{student.father_name || "—"}</p></div>
-            <div><p className="text-muted-foreground text-xs">Phone</p><p className="font-medium">{student.phone}</p></div>
-            <div><p className="text-muted-foreground text-xs">Parent phone</p><p className="font-medium">{student.parent_phone || "—"}</p></div>
-            <div><p className="text-muted-foreground text-xs">WhatsApp</p><p className="font-medium">{student.whatsapp || "—"}</p></div>
+            <div><p className="text-muted-foreground text-xs">WhatsApp Number</p><p className="font-medium">{student.whatsapp || student.phone || "—"}</p></div>
+            <div><p className="text-muted-foreground text-xs">Guardian WhatsApp</p><p className="font-medium">{student.parent_phone || "—"}</p></div>
             <div><p className="text-muted-foreground text-xs">CNIC/B-Form</p><p className="font-medium">{student.cnic_or_bform || "—"}</p></div>
             <div><p className="text-muted-foreground text-xs">DOB</p><p className="font-medium">{student.date_of_birth ? formatDate(student.date_of_birth) : "—"}</p></div>
             <div><p className="text-muted-foreground text-xs">Admission date</p><p className="font-medium">{formatDate(student.admission_date)}</p></div>
