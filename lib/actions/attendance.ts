@@ -320,8 +320,34 @@ export async function quickAttendanceAction(args: {
 
   const fee = await getCurrentMonthFee(student.id);
   const studentSummary = summarizeStudent(student);
+  const status = args.status ?? "present";
 
   if (existing) {
+    const existingStatus = String((existing as Record<string, unknown>).status);
+
+    // A finalized "absent" student who scans later should be corrected to present.
+    if (existingStatus === "absent" && status === "present") {
+      const { error } = await supabase
+        .from("attendance")
+        .update({ status: "present", marked_via: args.via ?? "scanner" })
+        .eq("id", String((existing as Record<string, unknown>).id));
+      if (error) return { ok: false, error: error.message };
+      revalidatePath("/admin/attendance");
+      revalidatePath("/admin");
+      return {
+        ok: true,
+        data: {
+          student: studentSummary,
+          batch: { id: placement.batch_id, name: placement.name, start_time: placement.start_time },
+          session_type: sessionType,
+          status: "present",
+          alreadyMarked: false,
+          fee,
+        },
+        message: "Attendance marked present.",
+      };
+    }
+
     return {
       ok: true,
       data: {
@@ -330,7 +356,7 @@ export async function quickAttendanceAction(args: {
           ? { id: placement.batch_id, name: placement.name, start_time: placement.start_time }
           : null,
         session_type: sessionType,
-        status: String((existing as Record<string, unknown>).status),
+        status: existingStatus,
         alreadyMarked: true,
         fee,
       },
@@ -338,7 +364,6 @@ export async function quickAttendanceAction(args: {
     };
   }
 
-  const status = args.status ?? "present";
   const { error } = await supabase.from("attendance").insert({
     student_id: student.id,
     batch_id: placement.batch_id,

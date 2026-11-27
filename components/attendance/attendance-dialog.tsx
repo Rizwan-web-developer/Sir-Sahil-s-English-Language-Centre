@@ -57,7 +57,7 @@ function Placeholder() {
           <Button disabled size="sm">Present</Button>
           <Button variant="outline" disabled size="sm">Clear</Button>
         </div>
-        <p className="text-[11px] text-muted-foreground">Search student by ID or name to load details.</p>
+        <p className="text-[11px] text-muted-foreground">Scan a QR or type a student ID / name, then press Enter.</p>
       </div>
 
       <div className="space-y-2">
@@ -81,9 +81,9 @@ export function AttendanceDialog({ open, onOpenChange }: Props) {
   const [detail, setDetail] = useState<Detail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSearching, startSearch] = useTransition();
-  const [isLoading, startLoad] = useTransition();
   const [isMarking, startMark] = useTransition();
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const markByCodeRef = useRef<(code: string, via?: "scanner" | "manual_code" | "search") => void>(() => {});
 
   useEffect(() => {
     if (!open) return;
@@ -104,36 +104,145 @@ export function AttendanceDialog({ open, onOpenChange }: Props) {
     return () => clearTimeout(timer);
   }, [open, query]);
 
-  function selectStudent(id: string) {
-    setError(null);
-    startLoad(async () => {
-      const res = await getAttendanceStudentDetailAction(id);
-      if (!res.ok) {
-        setError(res.error);
+  /**
+   * USB barcode scanners act as keyboards. While this popup is open we capture
+   * scan characters even if the search box lost focus; when the popup is closed
+   * this listener is detached, so scanning never marks attendance outside it.
+   */
+  useEffect(() => {
+    if (!open) return;
+    let buffer = "";
+    let last = 0;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const typing = Boolean(
+        target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable),
+      );
+      if (typing) return; // the search form handles its own Enter
+
+      const now = Date.now();
+      if (now - last > 180) buffer = "";
+      last = now;
+
+      if (event.key === "Enter") {
+        const code = buffer.trim();
+        buffer = "";
+        if (code) {
+          event.preventDefault();
+          markByCodeRef.current(code, "scanner");
+        }
         return;
       }
-      setDetail(res.data);
+
+      if (event.key.length === 1) buffer += event.key;
+      if (buffer.length > 40) buffer = buffer.slice(-40);
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open]);
+
+  async function refreshDetail(studentId: string) {
+    const res = await getAttendanceStudentDetailAction(studentId);
+    if (res.ok) setDetail(res.data);
+  }
+
+  /** Mark a student present by QR/barcode or typed code, then load full details. */
+  function markByCode(raw: string, via: "scanner" | "manual_code" | "search" = "manual_code") {
+    const code = raw.trim();
+    if (!code || !open) return;
+    setError(null);
+    startMark(async () => {
+      const res = await quickAttendanceAction({ code, via, status: "present" });
+      if (!res.ok) {
+        setError(res.error);
+        toast.error(res.error);
+        setQuery("");
+        setResults([]);
+        return;
+      }
+
+      await refreshDetail(res.data.student.id);
+
+      if (res.data.alreadyMarked) {
+        toast.info(`${res.data.student.full_name} is already marked ${res.data.status}.`);
+      } else {
+        toast.success(`${res.data.student.full_name} marked present.`);
+      }
+      setQuery("");
       setResults([]);
+      window.setTimeout(() => inputRef.current?.focus(), 50);
     });
   }
 
-  function markPresent() {
-    if (!detail) return;
+  // Keep the global scanner listener pointed at the latest handler.
+  useEffect(() => {
+    markByCodeRef.current = markByCode;
+  });
+
+  /** Selecting a search result marks present immediately and opens the student card. */
+  function selectAndMark(row: SearchRow) {
+    if (!open) return;
     setError(null);
     startMark(async () => {
+      const detailRes = await getAttendanceStudentDetailAction(row.id);
+      if (!detailRes.ok) {
+        setError(detailRes.error);
+        return;
+      }
+      setDetail(detailRes.data);
+
       const res = await quickAttendanceAction({
-        code: String(detail.student.student_number),
-        via: "manual_code",
+        code: String(row.student_number),
+        via: "search",
         status: "present",
       });
       if (!res.ok) {
         setError(res.error);
+        toast.error(res.error);
         return;
       }
-      toast.success(res.message ?? "Attendance marked");
-      const refreshed = await getAttendanceStudentDetailAction(detail.student.id);
-      if (refreshed.ok) setDetail(refreshed.data);
+
+      await refreshDetail(row.id);
+      if (res.data.alreadyMarked) {
+        toast.info(`${row.full_name} is already marked ${res.data.status}.`);
+      } else {
+        toast.success(`${row.full_name} marked present.`);
+      }
+      setQuery("");
+      setResults([]);
+      window.setTimeout(() => inputRef.current?.focus(), 50);
     });
+  }
+
+  /** Enter in the search box: exact code → mark; otherwise pick the first match. */
+  async function submitQuery() {
+    const q = query.trim();
+    if (!q) return;
+    if (/^\d+$/.test(q) || /^selc[-\s]?\d+$/i.test(q)) {
+      markByCode(q, "scanner");
+      return;
+    }
+    if (results.length > 0) {
+      selectAndMark(results[0]);
+      return;
+    }
+    const res = await searchAttendanceStudentsAction(q);
+    if (!res.ok) {
+      setError(res.error);
+      return;
+    }
+    if (res.data.length > 0) {
+      selectAndMark(res.data[0]);
+      return;
+    }
+    setError("No student found. Type a Student ID or name.");
+  }
+
+  function markPresent() {
+    if (!detail) return;
+    markByCode(String(detail.student.student_number), "manual_code");
   }
 
   function reset() {
@@ -158,11 +267,17 @@ export function AttendanceDialog({ open, onOpenChange }: Props) {
             Attendance
           </DialogTitle>
           <DialogDescription>
-            Student ID ya name search karein, student select karein, phir Present mark karein.
+            Scan QR / type a Student ID or name and press Enter — attendance marks present and the student card opens. Scanning only works while this popup is open.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-2">
+        <form
+          className="space-y-2"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void submitQuery();
+          }}
+        >
           <Label htmlFor="attendance-search">Student ID / Name</Label>
           <div className="relative">
             <SearchIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -179,15 +294,18 @@ export function AttendanceDialog({ open, onOpenChange }: Props) {
                 }
                 if (detail) setDetail(null);
               }}
-              placeholder="Type student ID or name..."
+              placeholder="Scan QR or type student ID / name, then press Enter..."
               autoComplete="off"
               className="h-11 pl-9"
             />
-            {(isSearching || isLoading) && (
+            {(isSearching || isMarking) && (
               <LoaderCircleIcon className="absolute right-3 top-1/2 size-4 -translate-y-1/2 animate-spin text-muted-foreground" />
             )}
           </div>
-        </div>
+          <p className="text-[11px] text-muted-foreground">
+            USB scanner: scan any time this popup is open. Manual: pick a result — it marks present and opens details.
+          </p>
+        </form>
 
         {error && (
           <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
@@ -203,7 +321,8 @@ export function AttendanceDialog({ open, onOpenChange }: Props) {
                 key={s.id}
                 type="button"
                 className="flex w-full items-center justify-between gap-3 p-3 text-left hover:bg-muted/40"
-                onClick={() => selectStudent(s.id)}
+                onClick={() => selectAndMark(s)}
+                disabled={isMarking}
               >
                 <div className="min-w-0">
                   <p className="truncate font-medium">{s.full_name}</p>
@@ -239,11 +358,11 @@ export function AttendanceDialog({ open, onOpenChange }: Props) {
                 </div>
               </div>
               <div className="flex gap-2">
-                <Button size="sm" onClick={markPresent} disabled={isMarking || detail.todayAttendance?.status === "present"}>
+                <Button size="sm" type="button" onClick={markPresent} disabled={isMarking || detail.todayAttendance?.status === "present"}>
                   {isMarking ? <LoaderCircleIcon className="size-4 animate-spin" /> : null}
                   {detail.todayAttendance?.status === "present" ? "Present marked" : "Present"}
                 </Button>
-                <Button size="sm" variant="outline" onClick={reset}>Clear</Button>
+                <Button size="sm" type="button" variant="outline" onClick={reset}>Clear</Button>
               </div>
             </div>
 

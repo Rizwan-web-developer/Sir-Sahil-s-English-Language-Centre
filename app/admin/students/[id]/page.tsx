@@ -50,6 +50,10 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
     return { period, label: formatMonth(period), status, paid, isFuture: period > currentMonth, isCurrent: period === currentMonth, amountDue, amountPaid };
   });
 
+  const presentSessions = attendanceRows.filter((a) => a.status === "present" || a.status === "late").length;
+  const attendancePercent = attendanceRows.length > 0 ? Math.round((presentSessions / attendanceRows.length) * 100) : null;
+  const currentFee = sixMonths.find((m) => m.isCurrent) ?? null;
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -85,6 +89,8 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
             <div><p className="text-muted-foreground text-xs">Student ID</p><p className="font-mono font-semibold">{student.student_number}</p></div>
             <div><p className="text-muted-foreground text-xs">Course</p><p className="font-medium">{courseName || "—"}</p></div>
             <div><p className="text-muted-foreground text-xs">Course start</p><p className="font-medium">{courseStart ? formatDate(courseStart) : "—"}</p></div>
+            <div><p className="text-muted-foreground text-xs">Presents</p><p className="font-medium">{attendancePercent === null ? "—" : `${presentSessions}/${attendanceRows.length} (${attendancePercent}%)`}</p></div>
+            <div><p className="text-muted-foreground text-xs">This month fee</p><p className="font-medium">{!currentFee ? "—" : currentFee.paid ? "Paid" : currentFee.isFuture ? "Upcoming" : "Unpaid"}</p></div>
             <div><p className="text-muted-foreground text-xs">Father name</p><p className="font-medium">{student.father_name || "—"}</p></div>
             <div><p className="text-muted-foreground text-xs">WhatsApp Number</p><p className="font-medium">{student.whatsapp || student.phone || "—"}</p></div>
             <div><p className="text-muted-foreground text-xs">Guardian WhatsApp</p><p className="font-medium">{student.parent_phone || "—"}</p></div>
